@@ -147,7 +147,7 @@ Follow these steps to configure the local development environment.
 ```bash
 git clone git@github.com:kalviumcommunity/S84-0126-Nebula-Nextjs-AWS-OfflineAcad.git
 cd S84-0126-Nebula-Nextjs-AWS-OfflineAcad
-cd ```
+```
 
 **2. Install dependencies**
 ```bash
