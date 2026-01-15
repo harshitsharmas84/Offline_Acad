@@ -145,9 +145,9 @@ Follow these steps to configure the local development environment.
 
 **1. Clone the repository**
 ```bash
-git clone git@github.com:kalviumcommunity/SXX-0126-Team03-NextJS-AWS-OfflineEdu.git
-cd SXX-0126-Team03-NextJS-AWS-OfflineEdu
-```
+git clone git@github.com:kalviumcommunity/S84-0126-Nebula-Nextjs-AWS-OfflineAcad.git
+cd S84-0126-Nebula-Nextjs-AWS-OfflineAcad
+cd ```
 
 **2. Install dependencies**
 ```bash
