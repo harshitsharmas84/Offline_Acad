@@ -218,3 +218,14 @@ We enabled `strict: true` and `noImplicitAny` to eliminate an entire class of ru
 ### 3. Automation (Husky)
 We use `husky` and `lint-staged` to run checks *only on changed files*.
 * **Benefit:** Prevents bad commits. If the code doesn't pass the linter, it cannot be pushed. This guarantees that `main` is always buildable.
+
+### 4. Reproducibility
+To reproduce the QA environment on a fresh clone:
+
+```bash
+cd offline-academy
+npm install          # Installs all dependencies including husky
+npm run prepare      # Initializes Husky hooks (runs automatically via postinstall)
+```
+
+The `prepare` script in `package.json` ensures Husky hooks are installed automatically after `npm install`. The `core.hooksPath` is configured to point to `.husky/` at the repo root, which runs `lint-staged` from the `offline-academy` subdirectory.
