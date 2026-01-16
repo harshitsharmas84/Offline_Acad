@@ -203,3 +203,29 @@ We utilize **Conventional Commits** to automate changelog generation.
 /prisma         # Database Schema and migrations
 /public         # Static Assets & PWA Manifests
 ```
+
+## 🛡️ Quality Assurance (QA)
+
+We enforce a "Zero-Broken-Windows" policy using strict static analysis.
+
+### 1. Strict TypeScript (`tsconfig.json`)
+We enabled `strict: true` and `noImplicitAny` to eliminate an entire class of runtime errors (undefined is not a function). This forces the team to think about data structures *before* writing logic.
+
+### 2. The Linter (`.eslintrc.json`)
+* **Rule:** `no-console: warn` -> Prevents debugging logs from leaking into production.
+* **Rule:** `plugin:prettier/recommended` -> Delegates all styling to Prettier, preventing "tab vs space" wars in code reviews.
+
+### 3. Automation (Husky)
+We use `husky` and `lint-staged` to run checks *only on changed files*.
+* **Benefit:** Prevents bad commits. If the code doesn't pass the linter, it cannot be pushed. This guarantees that `main` is always buildable.
+
+### 4. Reproducibility
+To reproduce the QA environment on a fresh clone:
+
+```bash
+cd offline-academy
+npm install          # Installs all dependencies including husky
+npm run prepare      # Initializes Husky hooks (runs automatically via postinstall)
+```
+
+The `prepare` script in `package.json` ensures Husky hooks are installed automatically after `npm install`. The `core.hooksPath` is configured to point to `.husky/` at the repo root, which runs `lint-staged` from the `offline-academy` subdirectory.
