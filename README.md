@@ -246,3 +246,34 @@ We utilize **React Context + Custom Hooks** to manage global application state w
 ```
 Component -> useHook() -> Context -> Global State
 ```
+
+## 🛡️ Input Validation (Zod)
+
+We treat all external input as "untrusted" until verified. We use **Zod** to enforce strict schemas on our API endpoints.
+
+### 1. Schema Definition (`src/lib/schemas.ts`)
+We define schemas once and infer their TypeScript types. This ensures our Frontend Forms and Backend APIs are always in sync.
+
+```typescript
+export const loginSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+```
+
+### 2. Error Handling Strategy
+* **Middleware:** We catch `ZodError` explicitly in our API routes.
+* **Response Format:** We return a standardized 400 Bad Request with specific field errors, allowing the UI to highlight exactly which input failed.
+
+### 3. Evidence
+**Success Case:**
+```json
+{"success":true,"message":"Validation Passed","data":{"email":"student@kalvium.community"}}
+```
+
+**Failure Case:**
+```json
+{"success":false,"message":"Validation Error","errors":[{"field":"email","message":"Invalid email address"},{"field":"password","message":"Password must be at least 6 characters"}]}
+```
