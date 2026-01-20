@@ -1,11 +1,18 @@
-export interface ApiResponse<T> {
+export type ApiResponse<T> = {
   success: boolean;
   data?: T;
+  message?: string;
   error?: string;
-}
+};
 
-export const createResponse = <T>(success: boolean, data?: T, error?: string): ApiResponse<T> => ({
-  success,
+export const success = <T>(data: T, message?: string): ApiResponse<T> => ({
+  success: true,
   data,
-  error,
+  message,
+});
+
+export const error = (message: string, errorMsg?: string) => ({
+  success: false,
+  message,
+  error: errorMsg,
 });
