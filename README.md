@@ -229,3 +229,20 @@ npm run prepare      # Initializes Husky hooks (runs automatically via postinsta
 ```
 
 The `prepare` script in `package.json` ensures Husky hooks are installed automatically after `npm install`. The `core.hooksPath` is configured to point to `.husky/` at the repo root, which runs `lint-staged` from the `offline-academy` subdirectory.
+
+## 🧩 Global State Management (Context API)
+
+We utilize **React Context + Custom Hooks** to manage global application state without "prop-drilling."
+
+### 1. AuthContext (`useAuth`)
+* **Purpose:** Manages user session and authentication status.
+* **Feature:** Persists user session to `localStorage`, ensuring the user stays logged in even after a page refresh—critical for our "Offline" reliability.
+
+### 2. UIContext (`useUI`)
+* **Purpose:** Controls the application theme (Dark/Light) and Layout state.
+* **Feature:** Auto-detects the user's OS color scheme preference on first load.
+
+### 📐 Architecture Diagram
+```
+Component -> useHook() -> Context -> Global State
+```
