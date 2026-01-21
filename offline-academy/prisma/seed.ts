@@ -1,35 +1,51 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const user = await prisma.user.create({
-    data: {
-      name: "Test Student",
-      email: "student@test.com",
-      password: "hashed-password",
+  // 1. Seed Teacher
+  await prisma.user.upsert({
+    where: { email: "teacher@kalvium.community" },
+    update: {},
+    create: {
+      email: "teacher@kalvium.community",
+      name: "Ms. Frizzle",
+      role: Role.TEACHER,
     },
   });
 
-  const course = await prisma.course.create({
-    data: {
-      title: "Offline Web Basics",
-      description: "Learn web offline",
-      lessons: {
-        create: [
-          { title: "HTML Basics", content: "Intro", order: 1 },
-          { title: "CSS Basics", content: "Styling", order: 2 },
-        ],
-      },
+  // 2. Seed Student
+  await prisma.user.upsert({
+    where: { email: "student@kalvium.community" },
+    update: {},
+    create: {
+      email: "student@kalvium.community",
+      name: "Arnold Perlstein",
+      role: Role.STUDENT,
     },
   });
 
-  await prisma.enrollment.create({
-    data: {
-      userId: user.id,
-      courseId: course.id,
+  // 3. Seed Lessons
+  await prisma.lesson.upsert({
+    where: { id: "lesson-1" }, // Hardcoded ID for stability
+    update: {},
+    create: {
+      id: "lesson-1",
+      title: "Intro to Offline-First Architecture",
+      description: "Learn how to build apps that work without internet.",
+      duration: 45,
     },
   });
+
+  console.warn("🌱 Database seeded successfully");
 }
 
-main();
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

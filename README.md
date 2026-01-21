@@ -277,3 +277,16 @@ export type LoginInput = z.infer<typeof loginSchema>;
 ```json
 {"success":false,"message":"Validation Error","errors":[{"field":"email","message":"Invalid email address"},{"field":"password","message":"Password must be at least 6 characters"}]}
 ```
+
+## 🗄️ Database Management (Prisma)
+
+### Migration Workflow
+We use strict version control for our database schema.
+* **Generate:** `npx prisma migrate dev --name <description>`
+* **Reset:** `npx prisma migrate reset` (Wipes DB + Re-runs Seed)
+
+### Seeding Strategy (`prisma/seed.ts`)
+Our seed script uses `upsert` operations to ensure **idempotency**. This allows us to run `npx prisma db seed` multiple times without duplicate key errors, ensuring a stable development environment for the whole team.
+
+### Evidence
+Prisma Studio running at `http://localhost:5555` - verified User (Ms. Frizzle, Arnold Perlstein) and Lesson (Intro to Offline-First Architecture) records.
