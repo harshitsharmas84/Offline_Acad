@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db/prisma";
 
 export async function GET() {
-  return NextResponse.json({ status: "ok", timestamp: new Date().toISOString() });
+  const result = await prisma.$queryRaw`SELECT 1`;
+  return NextResponse.json({ status: "ok", db: result });
 }
