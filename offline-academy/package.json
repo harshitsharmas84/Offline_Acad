@@ -10,8 +10,10 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.2",
     "js-cookie": "^3.0.5",
     "next": "16.1.2",
+    "prisma": "^6.19.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zod": "^4.3.5"
