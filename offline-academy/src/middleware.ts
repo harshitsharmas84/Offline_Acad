@@ -1,32 +1,58 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Public routes
-  if (pathname === '/' || pathname.startsWith('/login')) {
-    return NextResponse.next();
-  }
-
-  // Protected routes
+  // Only protect API routes
   if (
-    pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/users')
+    pathname.startsWith("/api/users") ||
+    pathname.startsWith("/api/admin")
   ) {
-    const token = req.cookies.get('token')?.value;
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.split(" ")[1];
 
     if (!token) {
-      return NextResponse.redirect(new URL('/login', req.url));
+      return NextResponse.json(
+        { success: false, message: "Token missing" },
+        { status: 401 }
+      );
     }
 
-    // Token exists → allow
-    return NextResponse.next();
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as {
+        id: string;
+        email: string;
+        role: "STUDENT" | "TEACHER" | "ADMIN";
+      };
+
+      // 🔐 ADMIN-only access
+      if (pathname.startsWith("/api/admin") && decoded.role !== "ADMIN") {
+        return NextResponse.json(
+          { success: false, message: "Access denied" },
+          { status: 403 }
+        );
+      }
+
+      // Attach user info to request headers
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set("x-user-id", decoded.id);
+      requestHeaders.set("x-user-email", decoded.email);
+      requestHeaders.set("x-user-role", decoded.role);
+
+      return NextResponse.next({
+        request: { headers: requestHeaders },
+      });
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid or expired token" },
+        { status: 403 }
+      );
+    }
   }
 
   return NextResponse.next();
 }
-
-export const config = {
-  matcher: ['/dashboard/:path*', '/users/:path*'],
-};

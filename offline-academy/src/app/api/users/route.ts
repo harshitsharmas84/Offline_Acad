@@ -1,3 +1,29 @@
+
+
+import { NextResponse } from "next/server";
+
+export async function GET(req: Request) {
+  // User data injected by middleware.ts
+  const userEmail = req.headers.get("x-user-email");
+  const userRole = req.headers.get("x-user-role");
+
+  // Safety check (middleware already blocks unauthorized users)
+  if (!userEmail || !userRole) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorized access" },
+      { status: 401 }
+    );
+  }
+
+  return NextResponse.json({
+    success: true,
+    message: "User route accessible to all authenticated users",
+    user: {
+      email: userEmail,
+      role: userRole,
+    },
+  });
+=======
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
@@ -28,4 +54,5 @@ export async function GET(req: Request) {
       { status: 403 }
     );
   }
+
 }
