@@ -1,46 +1,48 @@
 import { NextResponse } from "next/server";
-import { loginSchema } from "@/lib/schemas";
-import { ZodError } from "zod";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { prisma } from "@/lib/db/prisma";
+
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is not defined");
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const { email, password } = await req.json();
 
-    // 🛡️ Zod Validation Layer
-    // .parse() throws an error if validation fails
-    const validatedData = loginSchema.parse(body);
-
-    // If we get here, data is guaranteed to be clean
-    return NextResponse.json({
-      success: true,
-      message: "Validation Passed",
-      data: {
-        email: validatedData.email,
-        timestamp: new Date().toISOString(),
-      },
-    });
-  } catch (error) {
-    // 🛡️ Error Handling Layer
-    if (error instanceof ZodError) {
+    if (!email || !password) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Validation Error",
-          errors: error.issues.map((e) => ({
-            field: e.path[0],
-            message: e.message,
-          })),
-        },
+        { success: false, message: "Email and password are required" },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Internal Server Error",
-      },
-      { status: 500 }
-    );
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 });
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Login successful",
+      token,
+    });
+  } catch {
+    return NextResponse.json({ success: false, message: "Login failed" }, { status: 500 });
   }
 }
