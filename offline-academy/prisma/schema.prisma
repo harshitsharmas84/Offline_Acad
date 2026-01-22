@@ -21,10 +21,14 @@ model User {
   email     String   @unique
   name      String?
   role      Role     @default(STUDENT)
+  xp        Int      @default(0) // New: For transaction demo
   createdAt DateTime @default(now())
 
   // Relations
   progress  UserProgress[]
+  
+  // Index: optimizing login lookups
+  @@index([email])
 }
 
 model Lesson {
@@ -52,4 +56,8 @@ model UserProgress {
 
   // Unique constraint prevents duplicate progress records
   @@unique([userId, lessonId])
+  // Index: Optimizing "Show me my progress" queries
+  @@index([userId])
+  // Index: Optimizing "How many students finished this?" queries
+  @@index([lessonId])
 }
