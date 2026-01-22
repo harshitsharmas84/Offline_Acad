@@ -18,10 +18,7 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { success: false, message: "User already exists" },
-        { status: 409 }
-      );
+      return NextResponse.json({ success: false, message: "User already exists" }, { status: 409 });
     }
 
     // 🔐 Hash password
@@ -50,10 +47,7 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: "Signup failed" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ success: false, message: "Signup failed" }, { status: 500 });
   }
 }

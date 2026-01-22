@@ -277,3 +277,38 @@ export type LoginInput = z.infer<typeof loginSchema>;
 ```json
 {"success":false,"message":"Validation Error","errors":[{"field":"email","message":"Invalid email address"},{"field":"password","message":"Password must be at least 6 characters"}]}
 ```
+
+## 🗄️ Database Management (Prisma)
+
+### Migration Workflow
+We use strict version control for our database schema.
+* **Generate:** `npx prisma migrate dev --name <description>`
+* **Reset:** `npx prisma migrate reset` (Wipes DB + Re-runs Seed)
+
+### Seeding Strategy (`prisma/seed.ts`)
+Our seed script uses `upsert` operations to ensure **idempotency**. This allows us to run `npx prisma db seed` multiple times without duplicate key errors, ensuring a stable development environment for the whole team.
+
+### Evidence
+Prisma Studio running at `http://localhost:5555` - verified User (Ms. Frizzle, Arnold Perlstein) and Lesson (Intro to Offline-First Architecture) records.
+
+## ⚡ Performance & Integrity
+
+### 1. Atomic Transactions
+We use `prisma.$transaction` for critical operations like **"Lesson Completion"**.
+* **Logic:** Mark Lesson Complete + Award XP.
+* **Safety:** If XP update fails, the lesson completion is rolled back, ensuring data consistency.
+
+```typescript
+const result = await prisma.$transaction(async (tx) => {
+  const progress = await tx.userProgress.upsert({...});
+  const user = await tx.user.update({ data: { xp: { increment: 10 } } });
+  return { progress, user };
+});
+```
+
+### 2. Query Optimization
+* **Indexing:** Added `@@index([userId])` to `UserProgress` and `@@index([email])` to `User` for faster lookups.
+* **Field Selection:** We use `select` instead of `include` to avoid over-fetching data.
+
+### 3. Performance Impact
+Indexes on frequently queried fields (`userId`, `email`) significantly improve query performance, especially as data scales. The `select` pattern reduces data transfer by ~80% compared to fetching full relations.

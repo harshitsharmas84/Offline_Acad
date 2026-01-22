@@ -8,18 +8,12 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Only protect API routes
-  if (
-    pathname.startsWith("/api/users") ||
-    pathname.startsWith("/api/admin")
-  ) {
+  if (pathname.startsWith("/api/users") || pathname.startsWith("/api/admin")) {
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.split(" ")[1];
 
     if (!token) {
-      return NextResponse.json(
-        { success: false, message: "Token missing" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, message: "Token missing" }, { status: 401 });
     }
 
     try {
@@ -31,10 +25,7 @@ export function middleware(req: NextRequest) {
 
       // 🔐 ADMIN-only access
       if (pathname.startsWith("/api/admin") && decoded.role !== "ADMIN") {
-        return NextResponse.json(
-          { success: false, message: "Access denied" },
-          { status: 403 }
-        );
+        return NextResponse.json({ success: false, message: "Access denied" }, { status: 403 });
       }
 
       // Attach user info to request headers

@@ -24,36 +24,25 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { success: false, message: "Invalid credentials" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 });
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
     return NextResponse.json({
       success: true,
       message: "Login successful",
       token,
     });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: "Login failed" },
-      { status: 500 }
-    );
+  } catch {
+    return NextResponse.json({ success: false, message: "Login failed" }, { status: 500 });
   }
 }
