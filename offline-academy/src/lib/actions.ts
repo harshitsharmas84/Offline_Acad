@@ -1,5 +1,5 @@
 "use server";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/db/prisma";
 
 export async function completeLesson(userId: string, lessonId: string) {
   try {

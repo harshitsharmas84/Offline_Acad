@@ -1,8 +1,11 @@
 import { PrismaClient, Role } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const hashedPassword = await bcrypt.hash("password123", 10);
+
   // 1. Seed Teacher
   await prisma.user.upsert({
     where: { email: "teacher@kalvium.community" },
@@ -11,6 +14,7 @@ async function main() {
       email: "teacher@kalvium.community",
       name: "Ms. Frizzle",
       role: Role.TEACHER,
+      password: hashedPassword,
     },
   });
 
@@ -22,6 +26,7 @@ async function main() {
       email: "student@kalvium.community",
       name: "Arnold Perlstein",
       role: Role.STUDENT,
+      password: hashedPassword,
     },
   });
 
