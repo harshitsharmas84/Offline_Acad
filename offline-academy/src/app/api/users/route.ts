@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  // User data injected by middleware.ts
+  // User data injected by authorization middleware
   const userEmail = req.headers.get("x-user-email");
   const userRole = req.headers.get("x-user-role");
 
-  // Safety check (middleware already blocks unauthorized users)
+  // Extra safety check (middleware already protects this)
   if (!userEmail || !userRole) {
     return NextResponse.json({ success: false, message: "Unauthorized access" }, { status: 401 });
   }
