@@ -7,10 +7,7 @@ export async function GET(req: Request) {
 
   // Extra safety check (middleware already protects this)
   if (!userEmail || !userRole) {
-    return NextResponse.json(
-      { success: false, message: "Unauthorized access" },
-      { status: 401 }
-    );
+    return NextResponse.json({ success: false, message: "Unauthorized access" }, { status: 401 });
   }
 
   return NextResponse.json({

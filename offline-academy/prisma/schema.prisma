@@ -22,12 +22,15 @@ model User {
   password  String   // 🔐 REQUIRED for authentication
   name      String?
   role      Role     @default(STUDENT)
-
+  xp        Int      @default(0) // For transaction demo
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
   progress  UserProgress[]
+  
+  // Index: optimizing login lookups
+  @@index([email])
 }
 
 
@@ -56,4 +59,8 @@ model UserProgress {
 
   // Unique constraint prevents duplicate progress records
   @@unique([userId, lessonId])
+  // Index: Optimizing "Show me my progress" queries
+  @@index([userId])
+  // Index: Optimizing "How many students finished this?" queries
+  @@index([lessonId])
 }

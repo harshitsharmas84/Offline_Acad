@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 
 export default function Header() {
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme") as "light" | "dark") || "light";
+    }
+    return "light";
+  });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark";
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
   }, []);
 
   if (!mounted) {
@@ -28,9 +29,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0">
-      <button onClick={toggleTheme}>
-        {theme === "light" ? "☀️" : "🌙"}
-      </button>
+      <button onClick={toggleTheme}>{theme === "light" ? "☀️" : "🌙"}</button>
     </header>
   );
 }
