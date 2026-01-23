@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/db/prisma";
+import { handleError } from "@/lib/errorHandler";
 
 export async function POST(req: Request) {
   try {
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch {
-    return NextResponse.json({ success: false, message: "Signup failed" }, { status: 500 });
+  } catch (error) {
+    return handleError(error, "POST /api/auth/signup");
   }
 }

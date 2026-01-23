@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/db/prisma";
+import { handleError } from "@/lib/errorHandler";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined");
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
       message: "Login successful",
       token,
     });
-  } catch {
-    return NextResponse.json({ success: false, message: "Login failed" }, { status: 500 });
+  } catch (error) {
+    return handleError(error, "POST /api/auth/login");
   }
 }
