@@ -1,16 +1,4 @@
-/* eslint-disable react-hooks/purity */
 export default async function DashboardPage() {
-  // Simulate network latency to demonstrate loading.tsx
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  // Simulate server failure to demonstrate error.tsx
-  // Note: Using impure function for demonstration purposes only
-  const shouldError = Date.now() % 2 === 0;
-
-  if (shouldError) {
-    throw new Error("Failed to connect to the Learning Management System (500).");
-  }
-
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Student Dashboard</h1>
