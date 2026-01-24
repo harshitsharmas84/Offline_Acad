@@ -1,340 +1,379 @@
-# S84-0126-Nebula-Nextjs-AWS-OfflineAcad
+# OfflineAcademy - Offline-First Learning Platform
 
-### Overview
+## Project Overview
 
-OfflineAcademy is a lightweight, offline-first educational web application built for rural schools and regions with low or unreliable internet connectivity. It allows students to access learning content without an active internet connection and synchronizes updates only when connectivity is available.
+OfflineAcademy is a progressive web application designed for educational institutions in rural and low-connectivity regions. The platform enables continuous learning through offline-first architecture, local data caching, and efficient synchronization protocols.
 
-Problem Statement
+### Problem Statement
 
-Most digital learning platforms assume:
+Traditional digital learning platforms require:
+- Continuous internet connectivity
+- High bandwidth availability  
+- Modern computing devices
 
-Continuous internet access
+These requirements create barriers in rural and low-bandwidth environments, resulting in:
+- Prolonged loading times
+- Content delivery failures
+- Excessive data consumption
+- Interrupted learning experiences
 
-High bandwidth
+### Solution Architecture
 
-Modern devices
+OfflineAcademy implements a comprehensive offline-first strategy:
 
-In rural and low-bandwidth areas, this leads to slow load times, broken content, high data usage, and disrupted learning experiences.
+**Core Features:**
+- Local-first data architecture with background synchronization
+- Progressive enhancement for low-end devices
+- Minimal bandwidth consumption through optimized assets
+- Service Worker-based caching for offline availability
 
-Our Solution & Approach
+**Technical Implementation:**
+- Content cached during initial access
+- Full offline functionality for core learning materials
+- Differential synchronization when connectivity is restored
+- Text-optimized content delivery (no video streaming)
 
-OfflineAcademy prioritizes offline usability and minimal bandwidth consumption.
+### Value Proposition
 
-Offline-first design ensures the app remains functional even without internet.
-
-Lightweight content (text-based lessons and optimized images) reduces data usage.
-
-PWA principles enable local caching, fast load times, and reliable offline access.
-
-How OfflineAcademy Supports Low-Bandwidth Areas
-
-Content is cached locally during initial access.
-
-Lessons remain fully accessible offline.
-
-Only updated data is synchronized when the internet is restored.
-
-No video streaming or heavy assets are used.
-
-Why OfflineAcademy Is Effective
-
-Designed specifically for low-bandwidth environments
-
-Works on low-end devices
-
-Minimizes network dependency
-
-Reliable, scalable, and easy to deploy
-
-Ensures uninterrupted learning in rural schools
-
-### Project Timeline
-## Week 1 – Planning & Setup
-
-Define problem, goals, and success criteria
-
-Finalize tech stack & system architecture
-
-Create initial folder structure and base project setup
-
-## Week 2 – Core Development
-
-Build backend APIs & database models
-
-Implement frontend UI + state management
-
-Integrate core features and connect backend with frontend
-
-## Week 3 – Testing & Optimization
-
-Write unit + integration tests
-
-Optimize performance and remove bugs
-
-Improve UX and add validation & error handling
-
-## Week 4 – Deployment & Documentation
-
-Deploy backend + frontend
-
-Add README, diagrams, and code comments
-
-Final QA, polish, and release
+- **Accessibility:** Functions reliably in low-connectivity environments
+- **Performance:** Optimized for low-end hardware
+- **Reliability:** Maintains functionality during network outages
+- **Scalability:** Efficient architecture for large-scale deployment
+- **Educational Continuity:** Ensures uninterrupted learning in rural schools
 
 ---
-## System Overview
 
-Unlike traditional web applications that rely on constant server communication, OfflineEdu treats the local client as the primary source of truth. The application downloads curriculum content for offline consumption and synchronizes learning progress with the cloud only when connectivity is restored. This approach eliminates latency as a bottleneck for the user experience.
+## Technology Stack
 
-## Architectural Decision Records (ADR)
+### Frontend
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript 5 (Strict Mode)
+- **Styling:** Tailwind CSS v4
+- **State Management:** React Context API
+- **Form Handling:** React Hook Form + Zod
+- **UI Components:** Custom component library
 
-The technology stack was chosen to prioritize **performance on constrained hardware** and **resiliency in low-bandwidth environments**.
+### Backend & Database
+- **ORM:** Prisma 6
+- **Database:** PostgreSQL (Neon Serverless)
+- **API:** Next.js API Routes
+- **Validation:** Zod Schema Validation
 
-### 1. Frontend Architecture (Offline Core)
+### Quality Assurance
+- **Linting:** ESLint 9 (Flat Config)
+- **Formatting:** Prettier 3
+- **Git Hooks:** Husky + lint-staged
+- **Type Safety:** TypeScript Strict Mode
 
-| Component | Technology | Architectural Justification |
-| :--- | :--- | :--- |
-| **Framework** | **Next.js 15 (App Router)** | Utilizes React Server Components (RSC) to offload rendering logic to the server, significantly reducing the client-side JavaScript bundle size and improving Time-to-Interactive (TTI) on low-end devices. |
-| **PWA Engine** | **@serwist/next** | Implements aggressive Service Worker strategies (Stale-While-Revalidate) to serve cached assets immediately, allowing the application to function autonomously without network access. |
-| **Local Persistence** | **Dexie.js (IndexedDB)** | **Core Infrastructure.** Provides a strongly typed abstraction over IndexedDB, enabling the storage of gigabytes of rich media and lesson content directly within the browser sandbox. |
-| **State Management** | **TanStack Query v5** | Configured with `networkMode: 'offlineFirst'`. This decouples UI state from network availability, serving data from the local cache instantly while queuing background synchronization. |
-| **Interface Layer** | **TailwindCSS + ShadCN** | Zero-runtime CSS generation minimizes main-thread blocking, ensuring fluid animation and scrolling performance on older mobile hardware. |
+---
 
-### 2. Cloud Infrastructure (Serverless Backend)
+## Architecture & Patterns
 
-| Component | Technology | Architectural Justification |
-| :--- | :--- | :--- |
-| **Database** | **Neon (Postgres)** | **Scalability.** The serverless architecture supports "Database Branching," enabling isolated development environments that mirror production schemas without risking data integrity. |
-| **ORM** | **Prisma** | Enforces strict type safety across the stack. The auto-generated client ensures that frontend TypeScript definitions remain in lock-step with backend database schema changes. |
-| **CI/CD & Hosting** | **AWS Amplify (Gen 2)** | A managed pipeline optimized for Next.js, handling global edge distribution and automating build deployments upon version control events. |
-| **Identity** | **Clerk** | Managed authentication infrastructure capable of handling complex session states, specifically distinguishing between offline "guest" access and authenticated synchronization events. |
+### Global State Management
 
-## Data Synchronization Strategy
+Implemented using React Context API for authentication and UI state:
 
-We adhere to a **"Local-First, Cloud-Second"** protocol. User interactions are optimistic, updating the UI immediately via the local database. Synchronization occurs asynchronously in the background.
+**AuthContext:**
+- User session management
+- LocalStorage persistence
+- Loading state handling for hydration safety
 
-```mermaid
-graph TD
-    User[Student] -->|1. Request Content| UI[UI Layer]
-    UI -->|2. Query Cache| Dexie[Local DB / IndexedDB]
-    
-    subgraph "Client Device (Offline Capable)"
-        Dexie
-        SW[Service Worker / @serwist]
-    end
+**UIContext:**  
+- Theme management (light/dark mode)
+- Sidebar state control
+- OS preference detection
 
-    Dexie -->|3. Data Retrieved| UI
-    Dexie -.->|4. Background Sync Queue| API[Next.js API Routes]
-    
-    subgraph "Cloud Infrastructure"
-        API -->|5. Persist Data| DB[(Neon Postgres)]
-        API -->|6. Validate Session| Clerk[Clerk Auth]
-    end
-```
-
-## Development Setup
-
-Follow these steps to configure the local development environment.
-
-### Prerequisites
-
-*   **Node.js 20+ (LTS)**
-*   **Git** (Configured with SSH)
-
-### Installation Guide
-
-**1. Clone the repository**
-```bash
-git clone git@github.com:kalviumcommunity/S84-0126-Nebula-Nextjs-AWS-OfflineAcad.git
-cd S84-0126-Nebula-Nextjs-AWS-OfflineAcad
-```
-
-**2. Install dependencies**
-```bash
-npm install
-```
-
-**3. Environment Configuration**
-```bash
-cp .env.example .env.local
-# Note: Obtain the Neon DB connection string from the project administrator.
-```
-
-**4. Initialize Database Clients**
-```bash
-npx prisma generate
-npx prisma db push
-```
-
-**5. Start the Development Server**
-```bash
-npm run dev
-```
-
-## Engineering Standards & Contribution Protocols
-
-We maintain strict production engineering standards to ensure code quality and maintainability. Pull requests that do not adhere to these guidelines will not be merged.
-
-### 1. Branching Strategy
-*   `feat/feature-name`: For new capabilities and modules.
-*   `fix/bug-description`: For patches and bug repairs.
-*   `chore/setup`: For configuration changes, dependency updates, or documentation.
-
-### 2. Commit Message Standards
-We utilize **Conventional Commits** to automate changelog generation.
-*   **Acceptable:** `feat: implement offline storage wrapper`
-*   **Unacceptable:** `added storage`
-
-### 3. Pull Request Requirements
-*   **Visual Proof:** Must include a screenshot or screen recording for any UI modifications.
-*   **Validation:** Must explicitly list "How to Test" steps for the reviewer.
-*   **Pipeline Health:** Must pass all CI checks, including Linting, Type Checking, and Build verification.
-
-## Project Structure
-
-```text
-/app
-  /api          # Server-side API Routes (Edge compatible)
-  /components   # React Components (ShadCN UI system)
-  /lib
-    /db.ts      # Dexie.js configuration (Local Persistence)
-    /sync.ts    # Synchronization logic (Local to Cloud)
-  /sw.ts        # Service Worker Entry Point (@serwist configuration)
-/prisma         # Database Schema and migrations
-/public         # Static Assets & PWA Manifests
-```
-
-## 🛡️ Quality Assurance (QA)
-
-We enforce a "Zero-Broken-Windows" policy using strict static analysis.
-
-### 1. Strict TypeScript (`tsconfig.json`)
-We enabled `strict: true` and `noImplicitAny` to eliminate an entire class of runtime errors (undefined is not a function). This forces the team to think about data structures *before* writing logic.
-
-### 2. The Linter (`.eslintrc.json`)
-* **Rule:** `no-console: warn` -> Prevents debugging logs from leaking into production.
-* **Rule:** `plugin:prettier/recommended` -> Delegates all styling to Prettier, preventing "tab vs space" wars in code reviews.
-
-### 3. Automation (Husky)
-We use `husky` and `lint-staged` to run checks *only on changed files*.
-* **Benefit:** Prevents bad commits. If the code doesn't pass the linter, it cannot be pushed. This guarantees that `main` is always buildable.
-
-### 4. Reproducibility
-To reproduce the QA environment on a fresh clone:
-
-```bash
-cd offline-academy
-npm install          # Installs all dependencies including husky
-npm run prepare      # Initializes Husky hooks (runs automatically via postinstall)
-```
-
-The `prepare` script in `package.json` ensures Husky hooks are installed automatically after `npm install`. The `core.hooksPath` is configured to point to `.husky/` at the repo root, which runs `lint-staged` from the `offline-academy` subdirectory.
-
-## 🧩 Global State Management (Context API)
-
-We utilize **React Context + Custom Hooks** to manage global application state without "prop-drilling."
-
-### 1. AuthContext (`useAuth`)
-* **Purpose:** Manages user session and authentication status.
-* **Feature:** Persists user session to `localStorage`, ensuring the user stays logged in even after a page refresh—critical for our "Offline" reliability.
-
-### 2. UIContext (`useUI`)
-* **Purpose:** Controls the application theme (Dark/Light) and Layout state.
-* **Feature:** Auto-detects the user's OS color scheme preference on first load.
-
-### 📐 Architecture Diagram
-```
-Component -> useHook() -> Context -> Global State
-```
-
-## 🛡️ Input Validation (Zod)
-
-We treat all external input as "untrusted" until verified. We use **Zod** to enforce strict schemas on our API endpoints.
-
-### 1. Schema Definition (`src/lib/schemas.ts`)
-We define schemas once and infer their TypeScript types. This ensures our Frontend Forms and Backend APIs are always in sync.
-
+**Implementation:**
 ```typescript
-export const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-});
-
-export type LoginInput = z.infer<typeof loginSchema>;
+const { login, logout, isAuthenticated } = useAuth();
+const { theme, toggleTheme } = useUI();
 ```
 
-### 2. Error Handling Strategy
-* **Middleware:** We catch `ZodError` explicitly in our API routes.
-* **Response Format:** We return a standardized 400 Bad Request with specific field errors, allowing the UI to highlight exactly which input failed.
+### Input Validation
 
-### 3. Evidence
-**Success Case:**
+Centralized schema validation using Zod:
+
+**Schema Registry** (`src/lib/schemas.ts`):
+- Defines validation rules for all forms
+- Provides TypeScript type inference
+- Ensures consistency across client and server
+
+**API Layer:**
+- Request validation before processing
+- Standardized error responses with field-level detail
+- Type-safe data handling
+
+**Success Response:**
 ```json
-{"success":true,"message":"Validation Passed","data":{"email":"student@kalvium.community"}}
+{
+  "success": true,
+  "message": "Validation passed",
+  "data": {"email": "student@kalvium.community"}
+}
 ```
 
-**Failure Case:**
+**Error Response:**
 ```json
-{"success":false,"message":"Validation Error","errors":[{"field":"email","message":"Invalid email address"},{"field":"password","message":"Password must be at least 6 characters"}]}
+{
+  "success": false,
+  "message": "Validation error",
+  "errors": [
+    {"field": "email", "message": "Invalid email address"},
+    {"field": "password", "message": "Password must be at least 6 characters"}
+  ]
+}
 ```
 
-## 🗄️ Database Management (Prisma)
+---
+
+## Database Management
 
 ### Migration Workflow
-We use strict version control for our database schema.
-* **Generate:** `npx prisma migrate dev --name <description>`
-* **Reset:** `npx prisma migrate reset` (Wipes DB + Re-runs Seed)
 
-### Seeding Strategy (`prisma/seed.ts`)
-Our seed script uses `upsert` operations to ensure **idempotency**. This allows us to run `npx prisma db seed` multiple times without duplicate key errors, ensuring a stable development environment for the whole team.
+Version-controlled schema management using Prisma:
 
-### Evidence
-Prisma Studio running at `http://localhost:5555` - verified User (Ms. Frizzle, Arnold Perlstein) and Lesson (Intro to Offline-First Architecture) records.
+```bash
+# Create migration
+npx prisma migrate dev --name <description>
 
-## ⚡ Performance & Integrity
+# Reset database (development only)
+npx prisma migrate reset
+```
 
-### 1. Atomic Transactions
-We use `prisma.$transaction` for critical operations like **"Lesson Completion"**.
-* **Logic:** Mark Lesson Complete + Award XP.
-* **Safety:** If XP update fails, the lesson completion is rolled back, ensuring data consistency.
+### Seeding Strategy
+
+Idempotent seed script using upsert operations:
+
+**Benefits:**
+- Safe for multiple executions
+- No duplicate key errors
+- Consistent development environment across team
+
+**Implementation:**
+```typescript
+await prisma.user.upsert({
+  where: { email: "user@example.com" },
+  update: {},
+  create: { email: "user@example.com", name: "User" }
+});
+```
+
+**Verification:**
+```bash
+npx prisma studio
+# Access database GUI at http://localhost:5555
+```
+
+---
+
+## Performance & Data Integrity
+
+### Atomic Transactions
+
+Critical operations wrapped in database transactions:
+
+**Use Case:** Lesson Completion with XP Award
 
 ```typescript
 const result = await prisma.$transaction(async (tx) => {
   const progress = await tx.userProgress.upsert({...});
-  const user = await tx.user.update({ data: { xp: { increment: 10 } } });
+  const user = await tx.user.update({ 
+    data: { xp: { increment: 10 } } 
+  });
   return { progress, user };
 });
 ```
 
-### 2. Query Optimization
-* **Indexing:** Added `@@index([userId])` to `UserProgress` and `@@index([email])` to `User` for faster lookups.
-* **Field Selection:** We use `select` instead of `include` to avoid over-fetching data.
+**Guarantees:**
+- All-or-nothing execution
+- Data consistency across tables
+- Automatic rollback on failure
 
-### 3. Performance Impact
-Indexes on frequently queried fields (`userId`, `email`) significantly improve query performance, especially as data scales. The `select` pattern reduces data transfer by ~80% compared to fetching full relations.
+### Query Optimization
 
-## 📝 Form Handling (React Hook Form + Zod)
+**Indexing Strategy:**
+- `@@index([userId])` on UserProgress for dashboard queries
+- `@@index([email])` on User for authentication lookups
+- `@@index([lessonId])` for lesson analytics
 
-We moved away from manual state management (useState) to **React Hook Form** to minimize re-renders and improve performance.
+**Field Selection:**
+```typescript
+// Optimized: Select only required fields
+await prisma.user.findMany({
+  select: { id: true, name: true, _count: { select: { progress: true } } }
+});
 
-### 1. Reusable Component (`FormInput.tsx`)
-* **Generic Typing:** Uses TypeScript generics `<T>` to ensure the `name` prop matches the Zod schema keys exactly. No more typos in field names.
-* **UI Consistency:** Encapsulated Tailwind styles and error rendering in one place.
+// Avoid: Over-fetching with include
+await prisma.user.findMany({ include: { progress: { include: { lesson: true } } } });
+```
 
+**Performance Impact:**
+- Reduces data transfer by approximately 80%
+- Converts O(n) full table scans to O(log n) B-tree lookups
+- Critical for scalability with thousands of users
+
+---
+
+## Form Handling
+
+### React Hook Form Integration
+
+Migrated from manual state management to React Hook Form:
+
+**Generic Input Component:**
 ```typescript
 interface FormInputProps<T extends FieldValues> {
-  name: Path<T>; // Ensures 'name' matches a key in your Zod schema
+  name: Path<T>; // Type-safe field names from Zod schema
   register: UseFormRegister<T>;
-  // ...
+  error?: FieldError;
 }
 ```
 
-### 2. Validation Flow
-1. **Schema:** Defined in `lib/schemas.ts` using Zod
-2. **Resolver:** `zodResolver` connects Zod to React Hook Form
-3. **Feedback:** Errors are displayed instantly as the user types (or on submit)
+**Validation Flow:**
+1. Schema defined in `lib/schemas.ts` using Zod
+2. `zodResolver` connects schema to React Hook Form
+3. Instant client-side validation feedback
 
-### 3. Benefits
-* **Type Safety:** TypeScript prevents field name typos at compile time
-* **Performance:** Only re-renders changed fields, not the entire form
-* **User Experience:** Instant validation feedback without backend roundtrips
+**Benefits:**
+- **Type Safety:** Compile-time field name validation
+- **Performance:** Selective re-rendering (only changed fields)
+- **User Experience:** Immediate error feedback
+- **Consistency:** Single source of truth for validation rules
+
+---
+
+## UX Resilience
+
+### Loading States
+
+Next.js Suspense integration with skeleton loaders:
+
+**Implementation** (`loading.tsx`):
+```tsx
+<div className="h-10 w-64 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse" />
+```
+
+**Benefits:**
+- Immediate visual feedback during data fetching
+- Prevents content layout shift
+- Reduces perceived wait time
+
+### Error Boundaries
+
+Graceful degradation for server failures:
+
+**Implementation** (`error.tsx`):
+```tsx
+<button onClick={() => reset()}>Try Again</button>
+```
+
+**Features:**
+- Catches server-side errors without app crash
+- Retry mechanism without browser refresh
+- Error logging for observability (console in dev, Sentry in production)
+
+**Production Impact:**
+- No blank screens during network issues
+- User retains control during failures
+- Maintains trust through transparent error handling
+
+---
+
+## Development Workflow
+
+### Quality Assurance Pipeline
+
+**Pre-commit Checks:**
+```bash
+npx lint-staged  # Runs ESLint + Prettier on staged files
+```
+
+**Configuration:**
+- TypeScript Strict Mode enabled
+- ESLint 9 Flat Config with React rules
+- Prettier for consistent code formatting
+- Husky for automated git hooks
+
+### Reproducibility
+
+All contributors use identical tooling:
+- Node.js version specified in `.nvmrc` (if present)
+- Dependency versions locked in `package-lock.json`
+- Editor config standardization (ESLint + Prettier integration)
+
+---
+
+## Project Structure
+
+```
+offline-academy/
+├── src/
+│   ├── app/              # Next.js app router pages
+│   ├── components/       # Reusable UI components
+│   ├── context/          # Global state (Auth, UI)
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utilities, schemas, database client
+│   └── middleware.ts     # Request interceptors
+├── prisma/
+│   ├── schema.prisma     # Database schema
+│   ├── seed.ts           # Idempotent seed data
+│   └── migrations/       # Version-controlled migrations
+└── public/               # Static assets
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 20+
+- PostgreSQL database (or Neon serverless account)
+
+### Installation
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd offline-academy
+
+# Install dependencies
+npm install
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your DATABASE_URL
+
+# Run database migrations
+npx prisma migrate dev
+
+# Seed initial data
+npx prisma db seed
+
+# Start development server
+npm run dev
+```
+
+### Available Scripts
+
+```bash
+npm run dev         # Start development server (port 3000)
+npm run build       # Create production build
+npm run start       # Start production server
+npm run lint        # Run ESLint
+npx prisma studio   # Open database GUI
+```
+
+---
+
+## Contributing
+
+1. Follow existing code style (enforced by ESLint/Prettier)
+2. Write type-safe code (no `any` types)
+3. Include tests for new features
+4. Update documentation for API changes
+
+---
+
+## License
+
+MIT License - See LICENSE file for details

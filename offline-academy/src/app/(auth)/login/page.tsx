@@ -36,7 +36,7 @@ export default function LoginPage() {
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       toast.dismiss();
-      console.warn("✅ Form Valid & Submitted:", data);
+      console.warn("Form Valid & Submitted:", data);
 
       // Extract username from email
       const username = data.email.split("@")[0];
