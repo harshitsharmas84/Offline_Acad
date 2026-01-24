@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { UIProvider } from "@/context/UIContext";
 import Header from "@/components/layout/Header";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,14 @@ export default function RootLayout({
           <UIProvider>
             <Header />
             {children}
+
+            {/* ✅ Global Toast Provider */}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+              }}
+            />
           </UIProvider>
         </AuthProvider>
       </body>

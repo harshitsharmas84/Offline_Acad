@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,20 +21,28 @@ export default function LoginPage() {
     setError("");
 
     if (!email || !password) {
-      setError("Please fill in all fields");
+      toast.error("Please fill in all fields");
       return;
     }
 
     setIsLoading(true);
+    toast.loading("Signing in...");
+
     // Simulate API call
     setTimeout(() => {
+      toast.dismiss();
+
       if (email && password.length >= 6) {
         const username = email.split("@")[0];
         login(username);
+
+        toast.success("Login successful!");
         router.push("/dashboard");
       } else {
         setError("Invalid email or password");
+        toast.error("Invalid email or password");
       }
+
       setIsLoading(false);
     }, 800);
   };
@@ -43,7 +52,10 @@ export default function LoginPage() {
       {/* Background blobs */}
       <div className="absolute top-0 left-0 w-full h-full -z-10">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] animate-float"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] animate-float" style={{ animationDelay: '2s' }}></div>
+        <div
+          className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] animate-float"
+          style={{ animationDelay: "2s" }}
+        ></div>
       </div>
 
       <div className="w-full max-w-md animate-fade-in-up">
@@ -63,7 +75,9 @@ export default function LoginPage() {
         <Card className="card-premium !p-0 overflow-hidden border-none shadow-2xl">
           <div className="h-2 bg-gradient-to-r from-indigo-600 to-blue-600"></div>
           <CardHeader className="p-8 pb-0 border-none">
-            <CardTitle className="text-3xl font-black text-center">Welcome Back</CardTitle>
+            <CardTitle className="text-3xl font-black text-center">
+              Welcome Back
+            </CardTitle>
             <p className="text-center text-gray-500 dark:text-gray-400 mt-2 font-medium">
               Sign in to your account to continue learning
             </p>
@@ -76,7 +90,9 @@ export default function LoginPage() {
                 label="Email Address"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setEmail(e.target.value)
+                }
                 className="!bg-gray-50 dark:!bg-gray-900/50 border-none focus:ring-2 focus:ring-indigo-500"
               />
 
@@ -86,25 +102,34 @@ export default function LoginPage() {
                   label="Password"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
                   className="!bg-gray-50 dark:!bg-gray-900/50 border-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <div className="flex justify-end">
-                  <Link href="/" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                  <Link
+                    href="/"
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                  >
                     Forgot password?
                   </Link>
                 </div>
               </div>
 
               {error && (
-                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 animate-pulse">
+                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800">
                   <p className="text-red-700 dark:text-red-400 text-sm font-bold flex items-center gap-2">
                     <span>⚠️</span> {error}
                   </p>
                 </div>
               )}
 
-              <Button type="submit" isLoading={isLoading} className="w-full !py-4 !rounded-xl shadow-lg shadow-indigo-500/25 text-lg font-black">
+              <Button
+                type="submit"
+                isLoading={isLoading}
+                className="w-full !py-4 !rounded-xl shadow-lg shadow-indigo-500/25 text-lg font-black"
+              >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
@@ -125,6 +150,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full !py-4 !rounded-xl border-2 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 font-bold"
               onClick={() => {
+                toast.success("Logged in as demo user");
                 login("demo_student");
                 router.push("/dashboard");
               }}
@@ -136,7 +162,10 @@ export default function LoginPage() {
 
         <p className="text-center text-gray-500 dark:text-gray-400 mt-10 font-medium">
           Don't have an account?{" "}
-          <Link href="/signup" className="font-black text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 underline underline-offset-4">
+          <Link
+            href="/signup"
+            className="font-black text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 underline underline-offset-4"
+          >
             Sign up
           </Link>
         </p>
