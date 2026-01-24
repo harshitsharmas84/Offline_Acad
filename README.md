@@ -312,3 +312,29 @@ const result = await prisma.$transaction(async (tx) => {
 
 ### 3. Performance Impact
 Indexes on frequently queried fields (`userId`, `email`) significantly improve query performance, especially as data scales. The `select` pattern reduces data transfer by ~80% compared to fetching full relations.
+
+## 📝 Form Handling (React Hook Form + Zod)
+
+We moved away from manual state management (useState) to **React Hook Form** to minimize re-renders and improve performance.
+
+### 1. Reusable Component (`FormInput.tsx`)
+* **Generic Typing:** Uses TypeScript generics `<T>` to ensure the `name` prop matches the Zod schema keys exactly. No more typos in field names.
+* **UI Consistency:** Encapsulated Tailwind styles and error rendering in one place.
+
+```typescript
+interface FormInputProps<T extends FieldValues> {
+  name: Path<T>; // Ensures 'name' matches a key in your Zod schema
+  register: UseFormRegister<T>;
+  // ...
+}
+```
+
+### 2. Validation Flow
+1. **Schema:** Defined in `lib/schemas.ts` using Zod
+2. **Resolver:** `zodResolver` connects Zod to React Hook Form
+3. **Feedback:** Errors are displayed instantly as the user types (or on submit)
+
+### 3. Benefits
+* **Type Safety:** TypeScript prevents field name typos at compile time
+* **Performance:** Only re-renders changed fields, not the entire form
+* **User Experience:** Instant validation feedback without backend roundtrips
