@@ -1,9 +1,9 @@
 "use server";
-import { prisma } from "@/lib/db/prisma";
+import { prisma } from "@/lib/db";
 
 export async function completeLesson(userId: string, lessonId: string) {
   try {
-    // 🛡️ The Transaction
+    // Atomic transaction: Mark lesson complete + Award XP
     const result = await prisma.$transaction(async (tx) => {
       // Step 1: Mark Lesson as Completed
       const progress = await tx.userProgress.upsert({
@@ -18,21 +18,21 @@ export async function completeLesson(userId: string, lessonId: string) {
         },
       });
 
-      // Step 2: Award XP to User
+      // Step 2: Award XP to User (atomic increment)
       const user = await tx.user.update({
         where: { id: userId },
         data: {
-          xp: { increment: 10 }, // Atomic increment
+          xp: { increment: 10 },
         },
       });
 
       return { progress, user };
     });
 
-    console.warn("✅ Transaction Success:", result);
+    console.warn("Transaction Success:", result);
     return { success: true, newXp: result.user.xp };
   } catch (error) {
-    console.error("❌ Transaction Failed (Rolled Back):", error);
+    console.error("Transaction Failed (Rolled Back):", error);
     return { success: false, error: "Failed to complete lesson" };
   }
 }
