@@ -2,10 +2,32 @@
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useUI } from "@/hooks/useUI";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
+import LogoutModal from "@/components/LogoutModal";
 
 export default function Header() {
   const { isAuthenticated, logout, user } = useAuth();
   const { theme, toggleTheme } = useUI();
+  const router = useRouter();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    toast.loading("Logging out...");
+
+    setTimeout(() => {
+      toast.dismiss();
+      toast.success("Logged out successfully");
+      logout();
+      router.push("/login");
+    }, 1000);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full glass">
@@ -58,7 +80,7 @@ export default function Header() {
                   <span className="text-sm font-bold text-gray-900 dark:text-white">{user}</span>
                 </div>
                 <button
-                  onClick={logout}
+                  onClick={handleLogoutClick}
                   className="px-5 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all font-bold text-sm"
                 >
                   Logout
@@ -83,6 +105,13 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* Logout Modal */}
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+      />
     </header>
   );
 }

@@ -6,6 +6,8 @@ import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from "@/components/ui";
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import LogoutModal from "@/components/LogoutModal";
 
 export default function SettingsPage() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -15,6 +17,7 @@ export default function SettingsPage() {
   const [language, setLanguage] = useState("english");
   const [offlineMode, setOfflineMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -26,9 +29,20 @@ export default function SettingsPage() {
     return null;
   }
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    toast.loading("Logging out...");
+
+    setTimeout(() => {
+      toast.dismiss();
+      toast.success("Logged out successfully");
+      logout();
+      router.push("/");
+    }, 1000);
   };
 
   return (
@@ -219,7 +233,7 @@ export default function SettingsPage() {
                 <div className="flex gap-4">
                   <Button
                     variant="danger"
-                    onClick={handleLogout}
+                    onClick={handleLogoutClick}
                   >
                     Logout
                   </Button>
@@ -232,6 +246,13 @@ export default function SettingsPage() {
           </div>
         </main>
       </div>
+
+      {/* Logout Modal */}
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+      />
     </div>
   );
 }
