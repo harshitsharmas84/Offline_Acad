@@ -7,22 +7,31 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-
   // ✅ Ignore preflight requests
   if (req.method === "OPTIONS") {
     return NextResponse.next();
   }
 
-  // Only protect specific API routes
+  /**
+   * 🔓 PUBLIC ROUTES (no auth)
+   * - Used for Redis caching assignment
+   */
+  if (pathname.startsWith("/api/users")) {
+    return NextResponse.next();
+  }
 
-  // Only protect API routes
-
-  if (pathname.startsWith("/api/users") || pathname.startsWith("/api/admin")) {
+  /**
+   * 🔐 PROTECTED ADMIN ROUTES
+   */
+  if (pathname.startsWith("/api/admin")) {
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.split(" ")[1];
 
     if (!token) {
-      return NextResponse.json({ success: false, message: "Token missing" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Token missing" },
+        { status: 401 }
+      );
     }
 
     try {
@@ -32,12 +41,14 @@ export function middleware(req: NextRequest) {
         role: "STUDENT" | "TEACHER" | "ADMIN";
       };
 
-      // 🔐 Admin-only access
-      if (pathname.startsWith("/api/admin") && decoded.role !== "ADMIN") {
-        return NextResponse.json({ success: false, message: "Access denied" }, { status: 403 });
+      if (decoded.role !== "ADMIN") {
+        return NextResponse.json(
+          { success: false, message: "Access denied" },
+          { status: 403 }
+        );
       }
 
-      // Attach user info for downstream routes
+      // Attach user info
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set("x-user-id", decoded.id);
       requestHeaders.set("x-user-email", decoded.email);
@@ -58,8 +69,7 @@ export function middleware(req: NextRequest) {
 }
 
 /**
- * ✅ Explicit matcher (important)
- * Limits middleware execution to API routes only
+ * ✅ Run middleware only for API routes
  */
 export const config = {
   matcher: ["/api/:path*"],
