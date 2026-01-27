@@ -19,13 +19,14 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return NextResponse.json({ success: false, message: "User already exists" }, { status: 409 });
+      return NextResponse.json(
+        { success: false, message: "User already exists" },
+        { status: 409 }
+      );
     }
 
-    // 🔐 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Create user
     const user = await prisma.user.create({
       data: {
         email,
