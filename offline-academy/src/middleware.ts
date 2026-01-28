@@ -7,6 +7,16 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Enforce HTTPS in production (redirect non-HTTPS requests)
+  if (process.env.NODE_ENV === 'production') {
+    const proto = req.headers.get('x-forwarded-proto') || '';
+    if (proto !== 'https') {
+      const url = new URL(req.nextUrl.toString());
+      url.protocol = 'https:';
+      return NextResponse.redirect(url);
+    }
+  }
+
   // ✅ Ignore preflight requests
   if (req.method === "OPTIONS") {
     return NextResponse.next();
