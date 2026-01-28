@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import redis from "@/lib/redis";
 import { handleError } from "@/lib/errorHandler";
+import { getCorsHeaders, getSecurityHeaders, mergeHeaders } from '@/lib/security';
 
 /**
  * OWASP Security: Users API Route
@@ -18,50 +19,16 @@ export async function GET(req: Request) {
     const userRole = req.headers.get("x-user-role");
 
     if (!userEmail || !userRole) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized access" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, message: "Unauthorized access" }, { status: 401 });
     }
-
-    // 🗝️ Cache key (user-specific, prevents data leakage between users)
-    const cacheKey = `user:info:${userEmail}`;
-
-    // 1️⃣ Check Redis cache
-    // 🔒 Performance: Cached responses are already sanitized, no additional processing
-    const cachedData = await redis.get(cacheKey);
-
-    if (cachedData) {
-      console.log("🟢 Cache Hit");
-      return NextResponse.json({
-        success: true,
-        source: "cache",
-        // 🔒 XSS Prevention: Return only sanitized cached data
-        data: JSON.parse(cachedData),
-      });
-    }
-
-    console.log("🔵 Cache Miss");
-
-    // 2️⃣ Build response data
-    // 🔒 XSS Prevention: Only return necessary user information
-    // Never return sensitive data like password hashes or tokens
-    const responseData = {
-      email: userEmail,
-      role: userRole,
-      // If returning user profile data, ensure it's sanitized
-      // const profile = await sanitizeObject(user, ['name', 'bio'], []);
-    };
-
-    // 3️⃣ Store in Redis with TTL = 60s
-    // 🔒 Cache expiration prevents stale/compromised data
-    await redis.set(cacheKey, JSON.stringify(responseData), "EX", 60);
 
     return NextResponse.json({
       success: true,
-      source: "db",
-      // 🔒 XSS Prevention: Return sanitized user data
-      data: responseData,
+      message: "User route accessible to all authenticated users",
+      user: {
+        email: userEmail,
+        role: userRole,
+      },
     });
   } catch (error) {
     return handleError(error, "GET /api/users");

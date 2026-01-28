@@ -30,73 +30,75 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full glass">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
+    <header className="sticky top-0 z-50 w-full glass border-b border-gray-200 dark:border-gray-800">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo & Brand */}
-          <Link href="/" className="flex items-center gap-3 group transition-all">
-            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-indigo-600 to-blue-600 text-white rounded-xl font-bold shadow-lg group-hover:scale-110 transition-transform">
+          <Link href="/" className="flex items-center gap-2 group transition-all hover-lift">
+            <div className="flex items-center justify-center w-9 h-9 bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-lg font-bold text-sm shadow-md group-hover:scale-110 transition-transform duration-300">
               O
             </div>
-            <span className="text-2xl font-bold tracking-tight text-gradient">OfflineAcad</span>
+            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">OfflineAcad</span>
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-10">
-            <Link href="/" className="text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          <nav className="hidden md:flex items-center gap-8">
+            <Link href="/" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-300 relative group">
               Home
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-purple-700 group-hover:w-full transition-all duration-300"></span>
             </Link>
             {isAuthenticated && (
               <>
-                <Link href="/dashboard" className="text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <Link href="/dashboard" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-300 relative group">
                   Dashboard
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-purple-700 group-hover:w-full transition-all duration-300"></span>
                 </Link>
-                <Link href="/courses" className="text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <Link href="/courses" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-300 relative group">
                   Courses
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-600 to-purple-700 group-hover:w-full transition-all duration-300"></span>
                 </Link>
               </>
             )}
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-6">
-            {/* Theme Toggle */}
+          <div className="flex items-center gap-4">
+            {/* Theme Toggle - Lamp Icon */}
             <button
               onClick={toggleTheme}
-              className="relative p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all group overflow-hidden"
-              title="Toggle theme"
+              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group animate-bounce-gentle"
+              title="Toggle theme (Lamp)"
             >
-              <div className="relative z-10 text-xl group-hover:rotate-12 transition-transform">
-                {theme === "light" ? "🌙" : "☀️"}
+              <div className="text-lg group-hover:rotate-12 transition-transform duration-300">
+                {theme === "light" ? "💡" : "🔦"}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>
 
             {/* Auth Buttons */}
             {isAuthenticated ? (
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col items-end">
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end text-right">
                   <span className="text-xs text-gray-500 dark:text-gray-400">Welcome back,</span>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">{user}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{user}</span>
                 </div>
                 <button
                   onClick={handleLogoutClick}
-                  className="px-5 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all font-bold text-sm"
+                  className="px-4 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all duration-300 font-medium text-sm button-interactive hover-lift"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <Link
                   href="/login"
-                  className="px-6 py-2.5 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all font-bold text-sm"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-300 font-medium text-sm"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/25 transition-all font-bold text-sm hover:-translate-y-0.5"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-medium text-sm hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 button-interactive hover:-translate-y-0.5"
                 >
                   Sign Up
                 </Link>

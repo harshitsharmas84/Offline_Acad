@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { loginSchema } from "@/lib/schemas";
 import { prisma } from "@/lib/db/prisma";
+<<<<<<< Updated upstream
 import { createAccessToken, createRefreshToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { sanitizeEmail } from "@/lib/sanitizer";
+=======
+import { handleError } from "@/lib/errorHandler";
+import { getCorsHeaders, getSecurityHeaders, mergeHeaders } from '@/lib/security';
+
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is not defined");
+}
+const JWT_SECRET = process.env.JWT_SECRET;
+>>>>>>> Stashed changes
 
 /**
  * OWASP Security: Login API Route
@@ -58,13 +68,26 @@ export async function POST(req: Request) {
       path: "/",
     });
 
+<<<<<<< Updated upstream
     // 4. Return Access Token to Client (Memory Storage)
     // 🔒 Security: Access token in memory, refresh token in secure cookie
     return NextResponse.json({
       success: true,
       accessToken, // Frontend stores in memory/Context
       user: { id: user.id, email: user.email, role: user.role },
+=======
+    const response = NextResponse.json({
+      success: true,
+      message: "Login successful",
+      accessToken: token,
+>>>>>>> Stashed changes
     });
+
+    // Attach security and CORS headers
+    const headers = mergeHeaders(getSecurityHeaders(), getCorsHeaders());
+    Object.entries(headers).forEach(([k, v]) => response.headers.set(k, v));
+
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
