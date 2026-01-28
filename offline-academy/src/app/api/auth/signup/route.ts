@@ -2,18 +2,44 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/db/prisma";
 import { handleError } from "@/lib/errorHandler";
+import { sanitizeEmail, sanitizeText } from "@/lib/sanitizer";
 
+/**
+ * OWASP Security: Signup API Route
+ * 
+ * Security measures implemented:
+ * 1. XSS Prevention: User input sanitized before storage
+ * 2. SQL Injection Prevention: Using Prisma ORM parameterized queries
+ * 3. Input validation: Email and password requirements checked
+ * 4. Password security: Bcrypt hashing with salt rounds
+ */
 export async function POST(req: Request) {
   try {
-    const { email, password, name } = await req.json();
+    const { email: rawEmail, password, name: rawName } = await req.json();
 
-    if (!email || !password) {
+    if (!rawEmail || !password) {
       return NextResponse.json(
         { success: false, message: "Email and password are required" },
         { status: 400 }
       );
     }
 
+    // 🔒 XSS Prevention: Sanitize user input before storing
+    // Removes any HTML tags or JavaScript injection attempts
+    const email = sanitizeEmail(rawEmail);
+    const name = sanitizeText(rawName || "");
+
+    // Validate sanitized email is not empty after cleaning
+    if (!email) {
+      return NextResponse.json(
+        { success: false, message: "Invalid email format" },
+        { status: 400 }
+      );
+    }
+
+    // 🔒 SQL Injection Prevention: Prisma ORM uses parameterized queries
+    // User input treated as DATA, never as SQL code
+    // Even malicious input like "' OR '1'='1" is treated as literal string
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
