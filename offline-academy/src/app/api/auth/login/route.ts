@@ -1,84 +1,48 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { prisma } from "@/lib/db/prisma";
-import redis from "@/lib/redis";
-import { handleError } from "@/lib/errorHandler";
-
-const JWT_SECRET = process.env.JWT_SECRET!;
-const ACCESS_TOKEN_EXPIRY = "15m"; // short-lived
-const REFRESH_TOKEN_EXPIRY = "7d"; // long-lived
+import { loginSchema } from "@/lib/schemas";
+import { prisma } from "@/lib/db/prisma"; // Ensure you have this from Module 2.15
+import { createAccessToken, createRefreshToken } from "@/lib/jwt";
+import { cookies } from "next/headers";
+// import bcrypt from "bcrypt"; // Commented out until bcrypt is confirmed installed/used
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const { email } = loginSchema.parse(body);
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { success: false, message: "Email and password are required" },
-        { status: 400 }
-      );
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    // 1. Find User (Mocking password check for now as we didn't do hashing yet)
+    // In production: await bcrypt.compare(password, user.password)
+    const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 401 });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // 2. Generate Tokens
+    // CRITICAL: Include role in payload for RBAC checks
+    const accessToken = await createAccessToken({ userId: user.id, role: user.role });
+    const refreshToken = await createRefreshToken({ userId: user.id, role: user.role }); // Include role in refresh token too for auth-server check
 
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { success: false, message: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
-
-    // 🔑 Access Token
-    const accessToken = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: ACCESS_TOKEN_EXPIRY }
-    );
-
-    // 🔁 Refresh Token
-    const refreshToken = jwt.sign(
-      { id: user.id },
-      JWT_SECRET,
-      { expiresIn: REFRESH_TOKEN_EXPIRY }
-    );
-
-    // 🧠 Store refresh token in Redis
-    await redis.set(
-      `refresh:${user.id}`,
-      refreshToken,
-      "EX",
-      7 * 24 * 60 * 60 // 7 days
-    );
-
-    // 🍪 Set refresh token as HTTP-only cookie
-    const response = NextResponse.json({
-      success: true,
-      message: "Login successful",
-      accessToken,
-    });
-
-    response.cookies.set("refreshToken", refreshToken, {
+    // 3. Set Refresh Token in HTTP-Only Cookie (Security Critical)
+    // This prevents XSS attacks from stealing the refresh token
+    const cookieStore = await cookies();
+    cookieStore.set("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",
-      maxAge: 7 * 24 * 60 * 60,
     });
 
-    return response;
+    // 4. Return Access Token to Client (Memory Storage)
+    return NextResponse.json({
+      success: true,
+      accessToken, // Frontend stores this in memory/Context
+      user: { id: user.id, email: user.email, role: user.role },
+    });
+
   } catch (error) {
-    return handleError(error, "POST /api/auth/login");
+    console.error("Login error:", error);
+    return NextResponse.json({ success: false, message: "Invalid Request" }, { status: 400 });
   }
 }

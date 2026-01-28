@@ -1,24 +1,30 @@
-import jwt from "jsonwebtoken";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { SignJWT, jwtVerify } from "jose";
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "default-unsafe-secret");
+const ALG = "HS256";
 
-export function signAccessToken(payload: object) {
-  return jwt.sign(payload, ACCESS_SECRET, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m",
-  });
+export async function createAccessToken(payload: any) {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: ALG })
+    .setIssuedAt()
+    .setExpirationTime("15m") // Short-lived (Security Best Practice)
+    .sign(SECRET);
 }
 
-export function signRefreshToken(payload: object) {
-  return jwt.sign(payload, REFRESH_SECRET, {
-    expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d",
-  });
+export async function createRefreshToken(payload: any) {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: ALG })
+    .setIssuedAt()
+    .setExpirationTime("7d") // Long-lived
+    .sign(SECRET);
 }
 
-export function verifyAccessToken(token: string) {
-  return jwt.verify(token, ACCESS_SECRET);
-}
-
-export function verifyRefreshToken(token: string) {
-  return jwt.verify(token, REFRESH_SECRET);
+export async function verifyToken(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, SECRET);
+    return payload;
+  } catch (_error) {
+    return null; // Invalid or Expired
+  }
 }
