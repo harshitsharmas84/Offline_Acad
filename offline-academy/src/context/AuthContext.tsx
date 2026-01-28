@@ -1,10 +1,17 @@
-
 "use client";
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { Role } from "@prisma/client";
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: Role;
+  name?: string | null;
+}
 
 interface AuthContextType {
-  user: string | null;
-  login: (username: string) => void;
+  user: UserProfile | null;
+  login: (user: UserProfile) => void;
   logout: () => void;
   isLoading: boolean;
 }
@@ -13,9 +20,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   // Lazy initialization to avoid setState-in-effect
-  const [user, setUser] = useState<string | null>(() => {
+  const [user, setUser] = useState<UserProfile | null>(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("offline_user");
+      const stored = localStorage.getItem("offline_user_profile");
+      try {
+        return stored ? JSON.parse(stored) : null;
+      } catch {
+        return null;
+      }
     }
     return null;
   });
@@ -27,13 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (username: string) => {
-    localStorage.setItem("offline_user", username);
-    setUser(username);
+  const login = (userProfile: UserProfile) => {
+    localStorage.setItem("offline_user_profile", JSON.stringify(userProfile));
+    setUser(userProfile);
   };
 
   const logout = () => {
-    localStorage.removeItem("offline_user");
+    localStorage.removeItem("offline_user_profile");
+    // Also clear cookie via API if possible, but for now just clear local state
     setUser(null);
   };
 
@@ -50,4 +63,3 @@ export function useAuthContext() {
   if (!context) throw new Error("useAuthContext must be used within an AuthProvider");
   return context;
 }
-

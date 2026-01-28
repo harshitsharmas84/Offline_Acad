@@ -32,22 +32,30 @@ export default function LoginPage() {
     toast.loading("Signing in...");
 
     try {
-      // Simulate API Call delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Login failed");
+      }
 
       toast.dismiss();
-      console.warn("Form Valid & Submitted:", data);
+      console.warn("Login Successful:", result.user);
 
-      // Extract username from email
-      const username = data.email.split("@")[0];
-      login(username);
+      // result.user contains { id, email, role }
+      login(result.user);
 
       toast.success("Login successful!");
       router.push("/dashboard");
-    } catch {
+    } catch (error: any) {
       toast.dismiss();
-      setServerError("Invalid credentials or server unavailable.");
-      toast.error("Invalid credentials");
+      setServerError(error.message || "Invalid credentials or server unavailable.");
+      toast.error(error.message || "Login failed");
     }
   };
 
@@ -144,9 +152,8 @@ export default function LoginPage() {
               variant="outline"
               className="w-full !py-4 !rounded-xl border-2 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 font-bold"
               onClick={() => {
-                toast.success("Logged in as demo user");
-                login("demo_student");
-                router.push("/dashboard");
+                // Quick fill for demo
+                toast("Please sign up or use real credentials for RBAC demo", { icon: "ℹ️" });
               }}
             >
               Try Demo Account
