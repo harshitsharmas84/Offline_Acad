@@ -25,13 +25,13 @@ export default function FileUpload() {
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // 2. Upload to Supabase "uploads" bucket
-      const { error } = await supabase.storage.from("uploads").upload(filePath, file);
+      // 2. Upload to Supabase "sample" bucket
+      const { error } = await supabase.storage.from("sample").upload(filePath, file);
 
       if (error) throw error;
 
       // 3. Get Public URL
-      const { data } = supabase.storage.from("uploads").getPublicUrl(filePath);
+      const { data } = supabase.storage.from("sample").getPublicUrl(filePath);
 
       setFileUrl(data.publicUrl);
       alert("Upload Successful!");
