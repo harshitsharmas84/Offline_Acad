@@ -1,0 +1,163 @@
+name: Deploy to AWS ECS
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: nebula-nextjs-app
+  ECS_SERVICE: nebula-app-service
+  ECS_CLUSTER: nebula-cluster
+  ECS_TASK_DEFINITION: nebula-app-task-definition
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    outputs:
+      image-tag: ${{ steps.image.outputs.tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: image
+        run: |
+          TIMESTAMP=$(date +%s)
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          IMAGE_TAG="${{ env.ECR_REPOSITORY }}:${GITHUB_REF##*/}-${SHA_SHORT}-${TIMESTAMP}"
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Image tag: $IMAGE_TAG"
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/${{ steps.image.outputs.tag }} .
+          docker tag ${{ steps.login-ecr.outputs.registry }}/${{ steps.image.outputs.tag }} ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+
+      - name: Push image to Amazon ECR
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ steps.image.outputs.tag }}
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ steps.image.outputs.tag }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy-ecs:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} --region ${{ env.AWS_REGION }} --query taskDefinition > task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/render-cloudformation-template@v1
+        with:
+          template: task-definition.json
+          substitutions: |
+            IMAGE=${{ steps.login-ecr.outputs.registry }}/${{ needs.build-and-push.outputs.image-tag }}
+
+      - name: Register new ECS task definition
+        run: |
+          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} --region ${{ env.AWS_REGION }} --query taskDefinition)
+          NEW_TASK_DEF=$(echo "$TASK_DEFINITION" | jq '.containerDefinitions[0].image = "${{ steps.login-ecr.outputs.registry }}/${{ needs.build-and-push.outputs.image-tag }}"')
+          aws ecs register-task-definition --cli-input-json file:///dev/stdin --region ${{ env.AWS_REGION }} <<< "$(echo "$NEW_TASK_DEF" | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')"
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --region ${{ env.AWS_REGION }}
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint --if-present
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run tests
+        run: npm test --if-present
+
+  notify:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [build-and-push, test]
+
+    steps:
+      - name: Notify deployment status
+        if: github.event_name == 'push'
+        run: |
+          echo "Deployment Status: ${{ job.status }}"
+          echo "Build & Push: ${{ needs.build-and-push.result }}"
+          echo "Tests: ${{ needs.test.result }}"
