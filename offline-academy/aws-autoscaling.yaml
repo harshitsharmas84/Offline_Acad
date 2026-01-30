@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for ECS autoscaling configuration'
+
+Parameters:
+  ClusterName:
+    Type: String
+    Default: nebula-cluster
+    Description: Name of the ECS cluster
+  
+  ServiceName:
+    Type: String
+    Default: nebula-app-service
+    Description: Name of the ECS service
+  
+  MinCapacity:
+    Type: Number
+    Default: 2
+    Description: Minimum number of tasks
+  
+  MaxCapacity:
+    Type: Number
+    Default: 6
+    Description: Maximum number of tasks
+  
+  TargetCPUUtilization:
+    Type: Number
+    Default: 70
+    Description: Target CPU utilization percentage
+  
+  TargetMemoryUtilization:
+    Type: Number
+    Default: 80
+    Description: Target memory utilization percentage
+
+Resources:
+  ServiceScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref MaxCapacity
+      MinCapacity: !Ref MinCapacity
+      ResourceId: !Sub 'service/${ClusterName}/${ServiceName}'
+      RoleARN: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService'
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  CPUScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: nebula-cpu-scaling-policy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: !Ref TargetCPUUtilization
+        ScaleOutCooldown: 300
+        ScaleInCooldown: 600
+
+  MemoryScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: nebula-memory-scaling-policy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageMemoryUtilization
+        TargetValue: !Ref TargetMemoryUtilization
+        ScaleOutCooldown: 300
+        ScaleInCooldown: 600
+
+  ALBRequestCountScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: nebula-request-count-scaling-policy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ALBRequestCountPerTarget
+          ResourceLabel: !Sub 'app/nebula-load-balancer/1234567890abcdef/targetgroup/nebula-app-tg/1234567890abcdef'
+        TargetValue: 1000
+        ScaleOutCooldown: 60
+        ScaleInCooldown: 300
+
+  HighCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: nebula-high-cpu-alarm
+      AlarmDescription: Alert when CPU usage is very high
+      MetricName: CPUUtilization
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 90
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: ServiceName
+          Value: !Ref ServiceName
+        - Name: ClusterName
+          Value: !Ref ClusterName
+      AlarmActions:
+        - !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:nebula-alerts'
+
+  HighMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: nebula-high-memory-alarm
+      AlarmDescription: Alert when memory usage is very high
+      MetricName: MemoryUtilization
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 95
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: ServiceName
+          Value: !Ref ServiceName
+        - Name: ClusterName
+          Value: !Ref ClusterName
+      AlarmActions:
+        - !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:nebula-alerts'
+
+Outputs:
+  ScalingTargetId:
+    Description: The ID of the scaling target
+    Value: !Ref ServiceScalingTarget
+    Export:
+      Name: !Sub '${ServiceName}-scaling-target'
+
+  CPUScalingPolicyArn:
+    Description: ARN of the CPU scaling policy
+    Value: !Ref CPUScalingPolicy
+    Export:
+      Name: !Sub '${ServiceName}-cpu-policy'
+
+  MemoryScalingPolicyArn:
+    Description: ARN of the memory scaling policy
+    Value: !Ref MemoryScalingPolicy
+    Export:
+      Name: !Sub '${ServiceName}-memory-policy'

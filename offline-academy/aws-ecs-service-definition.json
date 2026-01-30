@@ -1,0 +1,49 @@
+{
+  "serviceName": "nebula-app-service",
+  "cluster": "nebula-cluster",
+  "taskDefinition": "nebula-app-task-definition:1",
+  "desiredCount": 2,
+  "launchType": "FARGATE",
+  "platformVersion": "LATEST",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-xxxxxxxxx",
+        "subnet-yyyyyyyyy"
+      ],
+      "securityGroups": [
+        "sg-xxxxxxxxx"
+      ],
+      "assignPublicIp": "ENABLED"
+    }
+  },
+  "loadBalancers": [
+    {
+      "targetGroupArn": "arn:aws:elasticloadbalancing:ap-south-1:ACCOUNT_ID:targetgroup/nebula-app-tg/1234567890abcdef",
+      "containerName": "nextjs-app",
+      "containerPort": 3000
+    }
+  ],
+  "autoScalingGroupProvider": {
+    "autoScalingGroupArn": "arn:aws:autoscaling:ap-south-1:ACCOUNT_ID:autoScalingGroup:12345678-1234-1234-1234-123456789012:autoScalingGroupName/nebula-app-asg"
+  },
+  "deploymentConfiguration": {
+    "maximumPercent": 200,
+    "minimumHealthyPercent": 100,
+    "deploymentCircuitBreaker": {
+      "enable": true,
+      "rollback": true
+    }
+  },
+  "enableECSManagedTags": true,
+  "tags": [
+    {
+      "key": "Environment",
+      "value": "production"
+    },
+    {
+      "key": "Project",
+      "value": "Nebula-Offline-Academy"
+    }
+  ]
+}
