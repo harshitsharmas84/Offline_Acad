@@ -70,10 +70,10 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-2xl text-white font-bold">
-                    {user?.charAt(0).toUpperCase()}
+                    {user?.name?.charAt(0).toUpperCase() || "U"}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{user}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{user?.name || "User"}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Student Account</p>
                   </div>
                   <Button variant="outline" size="sm" className="ml-auto">
@@ -86,7 +86,7 @@ export default function SettingsPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <Input
                       label="Full Name"
-                      defaultValue={user || ""}
+                      defaultValue={user?.name || ""}
                       readOnly
                     />
                     <Input

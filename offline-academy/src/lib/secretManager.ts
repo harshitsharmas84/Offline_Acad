@@ -43,7 +43,7 @@ export async function getSecret(
 ): Promise<string> {
   try {
     // Fetch encrypted secret from database
-    const secret = await prisma.appSecret.findFirst({
+    const secret = await prisma.secret.findFirst({
       where: {
         key,
         environment,
@@ -93,11 +93,11 @@ export async function setSecret(
   environment: string = process.env.NODE_ENV || 'production'
 ): Promise<void> {
   const { encrypt } = await import('@/utils/crypto');
-  
+
   try {
     const encryptedValue = encrypt(value);
 
-    await prisma.appSecret.upsert({
+    await prisma.secret.upsert({
       where: {
         key_environment: {
           key,
@@ -129,7 +129,7 @@ export async function setSecret(
  * @returns Array of secret metadata (no decrypted values)
  */
 export async function listSecrets(environment?: string) {
-  const secrets = await prisma.appSecret.findMany({
+  const secrets = await prisma.secret.findMany({
     where: environment ? { environment } : undefined,
     select: {
       key: true,
@@ -156,7 +156,7 @@ export async function deleteSecret(
   key: string,
   environment: string = process.env.NODE_ENV ?? 'production'
 ): Promise<void> {
-  await prisma.appSecret.delete({
+  await prisma.secret.delete({
     where: {
       key_environment: {
         key,

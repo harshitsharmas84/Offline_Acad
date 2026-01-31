@@ -28,10 +28,10 @@ const prisma = new PrismaClient();
 const SECRETS_TO_SEED = {
   // Example: Database connection string
   DATABASE_URL: 'postgresql://user:password@localhost:5432/offline_academy',
-  
+
   // Example: JWT signing key
   JWT_SECRET: 'your-super-secret-jwt-key-change-this-in-production',
-  
+
   // Add more secrets as needed
   // SMTP_PASSWORD: 'your-smtp-password',
   // API_KEY: 'your-api-key',
@@ -66,7 +66,11 @@ async function seedSecrets() {
         // Upsert to database (update if exists, create if not)
         await prisma.secret.upsert({
           where: {
-            key,
+            // Prisma requires the full composite unique key
+            key_environment: {
+              key,
+              environment: ENVIRONMENT,
+            }
           },
           update: {
             value: encryptedValue,
@@ -92,7 +96,7 @@ async function seedSecrets() {
     console.log(`\n📊 Seeding Summary:`);
     console.log(`   ✓ Successful: ${successCount}`);
     console.log(`   ✗ Failed: ${errorCount}`);
-    
+
     if (successCount > 0) {
       console.log(`\n⚠️  IMPORTANT SECURITY STEPS:`);
       console.log(`   1. DELETE this script file immediately`);
