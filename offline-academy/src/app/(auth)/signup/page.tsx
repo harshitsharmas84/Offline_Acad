@@ -33,7 +33,13 @@ export default function SignupPage() {
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
-      login(name);
+      // Mock login for frontend demo (In real app, API returns this)
+      login({
+        id: "mock-user-id",
+        name: name,
+        email: email,
+        role: "STUDENT" // Default role
+      });
       router.push("/dashboard");
       setIsLoading(false);
     }, 800);

@@ -2,11 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/db/prisma";
 import { handleError } from "@/lib/errorHandler";
-<<<<<<< Updated upstream
 import { sanitizeEmail, sanitizeText } from "@/lib/sanitizer";
-=======
 import { getCorsHeaders, getSecurityHeaders, mergeHeaders } from '@/lib/security';
->>>>>>> Stashed changes
 
 /**
  * OWASP Security: Signup API Route
@@ -21,12 +18,8 @@ export async function POST(req: Request) {
   try {
     const { email: rawEmail, password, name: rawName } = await req.json();
 
-<<<<<<< Updated upstream
     if (!rawEmail || !password) {
-=======
-    if (!email || !password) {
       const headers = mergeHeaders(getSecurityHeaders(), getCorsHeaders());
->>>>>>> Stashed changes
       return NextResponse.json(
         { success: false, message: "Email and password are required" },
         { status: 400, headers }
@@ -54,15 +47,11 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-<<<<<<< Updated upstream
+      const headers = mergeHeaders(getSecurityHeaders(), getCorsHeaders());
       return NextResponse.json(
         { success: false, message: "User already exists" },
-        { status: 409 }
+        { status: 409, headers }
       );
-=======
-      const headers = mergeHeaders(getSecurityHeaders(), getCorsHeaders());
-      return NextResponse.json({ success: false, message: "User already exists" }, { status: 409, headers });
->>>>>>> Stashed changes
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

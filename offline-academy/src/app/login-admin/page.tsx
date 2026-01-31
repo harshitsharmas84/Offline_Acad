@@ -34,7 +34,14 @@ export default function LoginPage() {
         throw new Error("Simulated Backend Error");
       }
 
-      login(data.email.split("@")[0]); // Use Auth Hook
+      // Use Auth Hook with full profile
+      // In a real app, this data comes from the API response
+      login({
+        id: "mock-admin-id",
+        name: data.email.split("@")[0],
+        email: data.email,
+        role: "ADMIN"
+      });
       alert("Login Successful!");
     } catch {
       setServerError("Invalid credentials or server unavailable.");

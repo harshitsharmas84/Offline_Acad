@@ -79,7 +79,7 @@ export default function Header() {
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-end text-right">
                   <span className="text-xs text-gray-500 dark:text-gray-400">Welcome back,</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{user}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{user?.name || "User"}</span>
                 </div>
                 <button
                   onClick={handleLogoutClick}
