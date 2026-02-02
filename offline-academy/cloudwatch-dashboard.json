@@ -1,0 +1,117 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "NebulaApp", "ErrorCount", { "stat": "Sum", "label": "Total Errors" } ],
+          [ ".", "FailedLoginCount", { "stat": "Sum", "label": "Failed Logins" } ]
+        ],
+        "period": 300,
+        "stat": "Sum",
+        "region": "ap-south-1",
+        "title": "Error Metrics (5-min window)",
+        "yAxis": {
+          "left": {
+            "min": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "NebulaApp", "APILatencyMs", { "stat": "Average", "label": "Avg Latency" } ],
+          [ "...", { "stat": "p99", "label": "P99 Latency" } ]
+        ],
+        "period": 300,
+        "stat": "Average",
+        "region": "ap-south-1",
+        "title": "API Response Time (ms)",
+        "yAxis": {
+          "left": {
+            "min": 0,
+            "max": 5000
+          }
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "AWS/ECS", "CPUUtilization", { "dimensions": { "ServiceName": "nebula-app" }, "stat": "Average", "label": "CPU %" } ],
+          [ ".", "MemoryUtilization", { "dimensions": { "ServiceName": "nebula-app" }, "stat": "Average", "label": "Memory %" } ]
+        ],
+        "period": 300,
+        "stat": "Average",
+        "region": "ap-south-1",
+        "title": "ECS Container Resources",
+        "yAxis": {
+          "left": {
+            "min": 0,
+            "max": 100
+          }
+        }
+      }
+    },
+    {
+      "type": "log",
+      "properties": {
+        "query": "fields @timestamp, message, level, requestId\n| stats count() as LogCount by level\n| sort LogCount desc",
+        "region": "ap-south-1",
+        "title": "Log Level Distribution",
+        "queryId": "log-level-distribution"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "NebulaApp", "ErrorCount", { "stat": "Sum" } ]
+        ],
+        "period": 3600,
+        "stat": "Sum",
+        "region": "ap-south-1",
+        "title": "Error Trend (Hourly)",
+        "yAxis": {
+          "left": {
+            "min": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "log",
+      "properties": {
+        "query": "fields @timestamp, endpoint, method, duration_ms\n| filter duration_ms > 500\n| stats avg(duration_ms) as AvgLatency, max(duration_ms) as MaxLatency, count() as SlowRequests by endpoint",
+        "region": "ap-south-1",
+        "title": "Slow Requests (>500ms)",
+        "queryId": "slow-requests"
+      }
+    },
+    {
+      "type": "log",
+      "properties": {
+        "query": "fields @timestamp, message, userId, requestId\n| filter message like /Login/\n| stats count() as LoginAttempts, count(userId) as UniqueUsers by message\n| sort LoginAttempts desc",
+        "region": "ap-south-1",
+        "title": "Authentication Activity",
+        "queryId": "auth-activity"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "AWS/ECS", "RunningCount", { "dimensions": { "ServiceName": "nebula-app" }, "stat": "Average", "label": "Running Tasks" } ],
+          [ ".", "DesiredCount", { "dimensions": { "ServiceName": "nebula-app" }, "stat": "Average", "label": "Desired Tasks" } ]
+        ],
+        "period": 300,
+        "stat": "Average",
+        "region": "ap-south-1",
+        "title": "ECS Task Health"
+      }
+    }
+  ]
+}
