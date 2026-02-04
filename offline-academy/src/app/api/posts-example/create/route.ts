@@ -26,8 +26,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔒 Authorization: Only TEACHER or ADMIN can create lessons
-    if (!["TEACHER", "ADMIN"].includes(userRole)) {
+    // 🔒 Authorization: Only ADMIN can create lessons
+    if (userRole !== "ADMIN") {
       return NextResponse.json(
         { success: false, message: "Permission denied" },
         { status: 403 }

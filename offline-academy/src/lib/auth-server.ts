@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
-import { Role } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+
+type Role = "STUDENT" | "ADMIN";
 
 export async function getCurrentUserRole(): Promise<Role | null> {
     const cookieStore = await cookies();
@@ -11,6 +13,22 @@ export async function getCurrentUserRole(): Promise<Role | null> {
 
     const payload = await verifyToken(token);
     return payload?.role as Role || null;
+}
+
+export async function verifyAuth(request: NextRequest): Promise<{ id: string; email: string; role: Role } | null> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("refreshToken")?.value;
+
+    if (!token) return null;
+
+    const payload = await verifyToken(token);
+    if (!payload) return null;
+
+    return {
+        id: payload.userId as string,
+        email: payload.email as string,
+        role: payload.role as Role,
+    };
 }
 
 export function unauthorized() {

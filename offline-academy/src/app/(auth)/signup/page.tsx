@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"STUDENT" | "ADMIN">("STUDENT");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,18 +33,49 @@ export default function SignupPage() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // Mock login for frontend demo (In real app, API returns this)
-      login({
-        id: "mock-user-id",
-        name: name,
-        email: email,
-        role: "STUDENT" // Default role
+    toast.loading("Creating account...");
+    
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role }),
       });
-      router.push("/dashboard");
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Signup failed");
+      }
+
+      toast.dismiss();
+      toast.success("Account created successfully!");
+
+      // Login user with returned data
+      login({
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        role: result.user.role
+      });
+
+      // Redirect based on role
+      router.push(result.user.role === "ADMIN" ? "/admin" : "/dashboard");
+    } catch (error: any) {
+      toast.dismiss();
+      const errorMessage = error.message || "Signup failed. Please try again.";
+      
+      // Check if it's a database connection error
+      if (errorMessage.includes("database") || errorMessage.includes("reach")) {
+        setError("Database is currently unavailable. Please wait a moment and try again.");
+        toast.error("Database connection issue. Retrying...", { duration: 4000 });
+      } else {
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -104,6 +137,41 @@ export default function SignupPage() {
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 className="!bg-gray-50 dark:!bg-gray-900/50 border-none focus:ring-2 focus:ring-indigo-500"
               />
+
+              {/* Role Selection */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
+                  I am signing up as
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setRole("STUDENT")}
+                    className={`p-6 rounded-xl border-2 transition-all ${
+                      role === "STUDENT"
+                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 shadow-lg"
+                        : "border-gray-200 dark:border-gray-700 hover:border-indigo-400"
+                    }`}
+                  >
+                    <div className="text-4xl mb-2">🎓</div>
+                    <div className="text-base font-bold">Student</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Learn courses</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole("ADMIN")}
+                    className={`p-6 rounded-xl border-2 transition-all ${
+                      role === "ADMIN"
+                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 shadow-lg"
+                        : "border-gray-200 dark:border-gray-700 hover:border-indigo-400"
+                    }`}
+                  >
+                    <div className="text-4xl mb-2">👑</div>
+                    <div className="text-base font-bold">Admin</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage platform</div>
+                  </button>
+                </div>
+              </div>
 
               {error && (
                 <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 animate-pulse">
