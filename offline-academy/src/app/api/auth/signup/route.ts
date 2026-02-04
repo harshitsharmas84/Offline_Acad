@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const requestLogger = createRequestLogger(requestId);
 
   try {
-    const { email: rawEmail, password, name: rawName } = await req.json();
+    const { email: rawEmail, password, name: rawName, role } = await req.json();
 
     requestLogger.debug('Signup attempt received', {
       endpoint: '/api/auth/signup',
@@ -86,11 +86,15 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Validate role (only STUDENT or ADMIN allowed)
+    const validRole = role === "ADMIN" ? "ADMIN" : "STUDENT";
+
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
+        role: validRole,
       },
       select: {
         id: true,

@@ -51,7 +51,9 @@ export default function LoginPage() {
       login(result.user);
 
       toast.success("Login successful!");
-      router.push("/dashboard");
+      
+      // Redirect based on role
+      router.push(result.user.role === "ADMIN" ? "/admin" : "/dashboard");
     } catch (error: any) {
       toast.dismiss();
       setServerError(error.message || "Invalid credentials or server unavailable.");

@@ -86,7 +86,7 @@ export function middleware(req: NextRequest) {
       const decoded = jwt.verify(token, JWT_SECRET) as {
         id: string;
         email: string;
-        role: "STUDENT" | "TEACHER" | "ADMIN";
+        role: "STUDENT" | "ADMIN";
       };
 
       if (decoded.role !== "ADMIN") {

@@ -6,14 +6,14 @@ const prisma = new PrismaClient();
 async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
-  // 1. Seed Teacher
+  // 1. Seed Admin
   await prisma.user.upsert({
-    where: { email: "teacher@kalvium.community" },
+    where: { email: "admin@kalvium.community" },
     update: {},
     create: {
-      email: "teacher@kalvium.community",
-      name: "Ms. Frizzle",
-      role: Role.TEACHER,
+      email: "admin@kalvium.community",
+      name: "Admin User",
+      role: Role.ADMIN,
       password: hashedPassword,
     },
   });

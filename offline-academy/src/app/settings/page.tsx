@@ -2,7 +2,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useUI } from "@/hooks/useUI";
 import { useRouter } from "next/navigation";
-import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from "@/components/ui";
 import { useEffect, useState } from "react";
@@ -50,8 +49,6 @@ export default function SettingsPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}

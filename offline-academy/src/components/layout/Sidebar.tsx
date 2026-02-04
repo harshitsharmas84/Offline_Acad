@@ -39,8 +39,8 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 h-screen sticky top-16 bg-gray-900 text-white overflow-y-auto border-r border-gray-800 shadow-lg">
-      <nav className="p-4 space-y-2">
+    <aside className="w-64 h-screen sticky top-0 bg-gray-900 text-white overflow-y-auto border-r border-gray-800 shadow-lg">
+      <nav className="p-4 space-y-2 pt-20">{/* Added pt-20 to account for fixed header */}
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (

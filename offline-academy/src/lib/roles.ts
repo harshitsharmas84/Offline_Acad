@@ -8,7 +8,6 @@ export type Permission =
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     [Role.STUDENT]: ["view:content"],
-    [Role.TEACHER]: ["view:content", "create:lesson", "view:analytics"],
     [Role.ADMIN]: ["view:content", "create:lesson", "delete:user", "view:analytics"],
 };
 
