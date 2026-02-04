@@ -11,6 +11,9 @@ const config: Config = {
     testEnvironment: 'jsdom',
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 
+    // 🚫 Exclude smoke tests from local runs (they require Node 20 native fetch)
+    testPathIgnorePatterns: ['<rootDir>/__smoke_tests__/'],
+
     // 🛡️ The "Elite" Standard: Fail if coverage drops below 80%
     collectCoverage: true,
     collectCoverageFrom: [
