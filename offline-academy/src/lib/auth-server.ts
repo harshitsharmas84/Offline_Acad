@@ -21,14 +21,18 @@ export async function verifyAuth(request: NextRequest): Promise<{ id: string; em
 
     if (!token) return null;
 
-    const payload = await verifyToken(token);
-    if (!payload) return null;
+    try {
+        const payload = await verifyToken(token);
+        if (!payload) return null;
 
-    return {
-        id: payload.userId as string,
-        email: payload.email as string,
-        role: payload.role as Role,
-    };
+        return {
+            id: payload.userId as string,
+            email: payload.email as string,
+            role: payload.role as Role,
+        };
+    } catch (error) {
+        return null; // Invalid token
+    }
 }
 
 export function unauthorized() {

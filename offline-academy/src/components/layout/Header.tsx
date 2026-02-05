@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useUI } from "@/hooks/useUI";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import LogoutModal from "@/components/LogoutModal";
@@ -12,6 +12,11 @@ export default function Header() {
   const { theme, toggleTheme } = useUI();
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
@@ -68,9 +73,11 @@ export default function Header() {
               onClick={toggleTheme}
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group animate-bounce-gentle"
               title="Toggle theme (Lamp)"
+              suppressHydrationWarning
             >
               <div className="text-lg group-hover:rotate-12 transition-transform duration-300">
-                {theme === "light" ? "💡" : "🔦"}
+                {mounted && (theme === "light" ? "💡" : "🔦")}
+                {!mounted && "💡"} {/* Default to light icon on server to prevent empty flash, or just match server default */}
               </div>
             </button>
 
