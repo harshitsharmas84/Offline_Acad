@@ -5,11 +5,12 @@ import { verifyAuth } from "@/lib/auth-server";
 // GET single lesson by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const lesson = await prisma.lesson.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         course: true,
         _count: {
@@ -39,11 +40,11 @@ export async function GET(
 // PUT - Update lesson (Admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await verifyAuth(request);
-    
+
     if (!user || user.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -51,11 +52,12 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { title, description, duration, contentUrl, courseId, order, isPublished } = body;
 
     const lesson = await prisma.lesson.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title,
         description,
@@ -79,11 +81,11 @@ export async function PUT(
 // DELETE lesson (Admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await verifyAuth(request);
-    
+
     if (!user || user.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Unauthorized. Admin access required." },
@@ -91,8 +93,9 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
     await prisma.lesson.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Lesson deleted successfully" });
