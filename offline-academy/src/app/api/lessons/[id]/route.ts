@@ -56,17 +56,19 @@ export async function PUT(
     const body = await request.json();
     const { title, description, duration, contentUrl, courseId, order, isPublished } = body;
 
+    // Build update data object with only provided fields
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (duration !== undefined) updateData.duration = parseInt(duration);
+    if (contentUrl !== undefined) updateData.contentUrl = contentUrl;
+    if (courseId !== undefined) updateData.courseId = courseId;
+    if (order !== undefined) updateData.order = order;
+    if (isPublished !== undefined) updateData.isPublished = isPublished;
+
     const lesson = await prisma.lesson.update({
       where: { id },
-      data: {
-        title,
-        description,
-        duration: duration ? parseInt(duration) : undefined,
-        contentUrl,
-        courseId,
-        order,
-        isPublished,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(lesson);

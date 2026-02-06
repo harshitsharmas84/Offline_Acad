@@ -3,78 +3,64 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from "@/components/ui";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+interface Lesson {
+  id: string;
+  title: string;
+  description: string | null;
+  duration: number;
+  isPublished: boolean;
+  contentUrl: string | null;
+  course: {
+    id: string;
+    title: string;
+    subject: string;
+  };
+  _count: {
+    progress: number;
+  };
+}
 
 export default function LessonsPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/login");
+      return;
     }
+
+    const fetchLessons = async () => {
+      try {
+        setLoading(true);
+        // Fetch only published lessons for students
+        const response = await fetch("/api/lessons?published=true");
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch lessons");
+        }
+
+        const data = await response.json();
+        setLessons(data);
+      } catch (err: any) {
+        setError(err.message || "Failed to load lessons");
+        console.error("Error fetching lessons:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLessons();
   }, [isAuthenticated, router]);
 
   if (!isAuthenticated) {
     return null;
   }
-
-  const lessons = [
-    {
-      id: 1,
-      title: "Introduction to Algebra",
-      course: "Mathematics",
-      duration: "45 min",
-      status: "completed",
-      icon: "✅",
-      difficulty: "Beginner",
-    },
-    {
-      id: 2,
-      title: "Quadratic Equations",
-      course: "Mathematics",
-      duration: "60 min",
-      status: "in-progress",
-      icon: "▶️",
-      difficulty: "Intermediate",
-    },
-    {
-      id: 3,
-      title: "The Solar System",
-      course: "Science",
-      duration: "50 min",
-      status: "not-started",
-      icon: "🌟",
-      difficulty: "Beginner",
-    },
-    {
-      id: 4,
-      title: "Cellular Biology",
-      course: "Science",
-      duration: "55 min",
-      status: "completed",
-      icon: "✅",
-      difficulty: "Intermediate",
-    },
-    {
-      id: 5,
-      title: "Shakespeare & Drama",
-      course: "English",
-      duration: "65 min",
-      status: "in-progress",
-      icon: "▶️",
-      difficulty: "Intermediate",
-    },
-    {
-      id: 6,
-      title: "World War II History",
-      course: "History",
-      duration: "70 min",
-      status: "not-started",
-      icon: "🌍",
-      difficulty: "Advanced",
-    },
-  ];
 
   const statusConfig = {
     completed: {
@@ -109,109 +95,169 @@ export default function LessonsPage() {
               </p>
             </div>
 
-            {/* Lessons Table/List */}
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                          Lesson
-                        </th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                          Course
-                        </th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                          Duration
-                        </th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                          Status
-                        </th>
-                        <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lessons.map((lesson) => {
-                        const config = statusConfig[lesson.status as keyof typeof statusConfig];
-                        return (
-                          <tr
-                            key={lesson.id}
-                            className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                          >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <span className="text-2xl">{lesson.icon}</span>
-                                <div>
-                                  <p className="font-medium text-gray-900 dark:text-white">
-                                    {lesson.title}
-                                  </p>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {lesson.difficulty}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                              {lesson.course}
-                            </td>
-                            <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                              {lesson.duration}
-                            </td>
-                            <td className="px-6 py-4">
-                              <Badge variant={config.color as any}>
-                                {config.badge}
-                              </Badge>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <Button variant="outline" size="sm">
-                                {config.button}
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Loading State */}
+            {loading && (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600 dark:text-gray-400">Loading lessons...</p>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Stats */}
-            <div className="grid md:grid-cols-3 gap-6 mt-8">
+            {/* Error State */}
+            {error && !loading && (
               <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-                      {lessons.filter(l => l.status === "completed").length}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">Completed</p>
-                  </div>
+                <CardContent className="p-12 text-center">
+                  <div className="text-4xl mb-4">⚠️</div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    Error Loading Lessons
+                  </h3>
+                  <p className="text-red-600 dark:text-red-400">{error}</p>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    className="mt-4"
+                  >
+                    Retry
+                  </Button>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && lessons.length === 0 && (
               <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                      {lessons.filter(l => l.status === "in-progress").length}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">In Progress</p>
-                  </div>
+                <CardContent className="p-12 text-center">
+                  <div className="text-4xl mb-4">📚</div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No Lessons Available
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Check back later for new learning content
+                  </p>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-gray-600 dark:text-gray-400">
-                      {lessons.filter(l => l.status === "not-started").length}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">Not Started</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            )}
+
+            {/* Lessons Table/List */}
+            {!loading && !error && lessons.length > 0 && (
+              <>
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                              Lesson
+                            </th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                              Course
+                            </th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                              Subject
+                            </th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                              Duration
+                            </th>
+                            <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                              Action
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lessons.map((lesson, index) => (
+                            <tr
+                              key={lesson.id}
+                              className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                            >
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 font-bold">
+                                    {index + 1}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">
+                                      {lesson.title}
+                                    </p>
+                                    {lesson.description && (
+                                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+                                        {lesson.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                {lesson.course.title}
+                              </td>
+                              <td className="px-6 py-4">
+                                <Badge variant="outline">
+                                  {lesson.course.subject}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
+                                {lesson.duration} min
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    // Navigate to lesson detail or start lesson
+                                    if (lesson.contentUrl) {
+                                      window.open(lesson.contentUrl, '_blank');
+                                    } else {
+                                      router.push(`/lessons/${lesson.id}`);
+                                    }
+                                  }}
+                                >
+                                  Start Lesson
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Stats */}
+                <div className="grid md:grid-cols-3 gap-6 mt-8">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                          {lessons.length}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">Total Lessons</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                          {lessons.filter(l => l.contentUrl).length}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">With Content</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                          {lessons.reduce((sum, l) => sum + l.duration, 0)}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">Total Minutes</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
           </div>
         </main>
       </div>

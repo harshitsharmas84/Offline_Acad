@@ -160,7 +160,10 @@ export default function CoursesPage() {
                       </div>
 
                       {/* CTA Button */}
-                      <Button className="w-full mt-4">
+                      <Button 
+                        className="w-full mt-4"
+                        onClick={() => router.push(`/courses/${course.id}`)}
+                      >
                         Start Course
                       </Button>
                     </CardContent>

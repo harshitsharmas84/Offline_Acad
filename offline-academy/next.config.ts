@@ -11,6 +11,14 @@ const CSP = [
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  
+  // Fix Turbopack workspace root detection issue
+  experimental: {
+    turbo: {
+      root: __dirname,
+    },
+  },
+  
   async headers() {
     return [
       {
