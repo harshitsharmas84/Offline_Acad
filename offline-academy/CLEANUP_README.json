@@ -1,6 +1,0 @@
-{
-  "scripts": {
-    "cleanup": "cleanup-dev.bat",
-    "dev:clean": "cleanup-dev.bat && npm run dev"
-  }
-}
