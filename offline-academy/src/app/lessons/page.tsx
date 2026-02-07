@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from "@/components/ui";
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 interface Lesson {
   id: string;
@@ -17,6 +18,14 @@ interface Lesson {
     title: string;
     subject: string;
   };
+  userProgress: {
+    id: string;
+    completed: boolean;
+    progressPercent: number;
+    timeSpent: number;
+    lastWatched: string;
+  } | null;
+  isCompleted: boolean;
   _count: {
     progress: number;
   };
@@ -28,6 +37,7 @@ export default function LessonsPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingLesson, setUpdatingLesson] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -35,50 +45,70 @@ export default function LessonsPage() {
       return;
     }
 
-    const fetchLessons = async () => {
-      try {
-        setLoading(true);
-        // Fetch only published lessons for students
-        const response = await fetch("/api/lessons?published=true");
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch lessons");
-        }
-
-        const data = await response.json();
-        setLessons(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to load lessons");
-        console.error("Error fetching lessons:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchLessons();
   }, [isAuthenticated, router]);
+
+  const fetchLessons = async () => {
+    try {
+      setLoading(true);
+      // Fetch only published lessons for students
+      const response = await fetch("/api/lessons?published=true");
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch lessons");
+      }
+
+      const data = await response.json();
+      setLessons(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to load lessons");
+      console.error("Error fetching lessons:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleLessonCompletion = async (lessonId: string, currentStatus: boolean) => {
+    try {
+      setUpdatingLesson(lessonId);
+      
+      const method = currentStatus ? "DELETE" : "POST";
+      const response = await fetch(`/api/lessons/${lessonId}/complete`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update lesson status");
+      }
+
+      const result = await response.json();
+
+      // Refresh lessons to get updated progress
+      await fetchLessons();
+      
+      if (currentStatus) {
+        toast.success("Lesson marked as incomplete");
+      } else {
+        toast.success(result.message || "Lesson completed! 🎉");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update lesson status");
+      console.error("Error updating lesson:", err);
+    } finally {
+      setUpdatingLesson(null);
+    }
+  };
 
   if (!isAuthenticated) {
     return null;
   }
 
-  const statusConfig = {
-    completed: {
-      badge: "Completed",
-      color: "success",
-      button: "Review",
-    },
-    "in-progress": {
-      badge: "In Progress",
-      color: "warning",
-      button: "Continue",
-    },
-    "not-started": {
-      badge: "Not Started",
-      color: "danger",
-      button: "Start",
-    },
-  };
+  const completedCount = lessons.filter(l => l.isCompleted).length;
+  const inProgressCount = lessons.filter(l => l.userProgress && !l.isCompleted).length;
+  const notStartedCount = lessons.filter(l => !l.userProgress).length;
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
@@ -199,21 +229,44 @@ export default function LessonsPage() {
                               <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                                 {lesson.duration} min
                               </td>
+                              <td className="px-6 py-4 text-center">
+                                {lesson.isCompleted ? (
+                                  <Badge variant="success">
+                                    ✓ Completed
+                                  </Badge>
+                                ) : lesson.userProgress ? (
+                                  <Badge variant="warning">
+                                    In Progress
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary">
+                                    Not Started
+                                  </Badge>
+                                )}
+                              </td>
                               <td className="px-6 py-4 text-right">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => {
-                                    // Navigate to lesson detail or start lesson
-                                    if (lesson.contentUrl) {
-                                      window.open(lesson.contentUrl, '_blank');
-                                    } else {
-                                      router.push(`/lessons/${lesson.id}`);
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => router.push(`/lessons/${lesson.id}`)}
+                                  >
+                                    View Lesson
+                                  </Button>
+                                  <Button
+                                    variant={lesson.isCompleted ? "secondary" : "primary"}
+                                    size="sm"
+                                    onClick={() => toggleLessonCompletion(lesson.id, lesson.isCompleted)}
+                                    disabled={updatingLesson === lesson.id}
+                                  >
+                                    {updatingLesson === lesson.id 
+                                      ? "..." 
+                                      : lesson.isCompleted 
+                                        ? "Unmark" 
+                                        : "Complete"
                                     }
-                                  }}
-                                >
-                                  Start Lesson
-                                </Button>
+                                  </Button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -223,8 +276,8 @@ export default function LessonsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Stats */}
-                <div className="grid md:grid-cols-3 gap-6 mt-8">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
                   <Card>
                     <CardContent className="pt-6">
                       <div className="text-center">
@@ -239,9 +292,19 @@ export default function LessonsPage() {
                     <CardContent className="pt-6">
                       <div className="text-center">
                         <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                          {lessons.filter(l => l.contentUrl).length}
+                          {completedCount}
                         </p>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">With Content</p>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">Completed</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                          {inProgressCount}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">In Progress</p>
                       </div>
                     </CardContent>
                   </Card>
